@@ -43,8 +43,22 @@ const submitRequest = async (url: string, payload: any): Promise<string> => {
   return data.request_id;
 };
 
-const pollResult = async (requestId: string): Promise<any> => {
-  const statusUrl = `https://queue.fal.run/fal-ai/queue/requests/${requestId}/status`;
+const getStatusUrl = (model: ModelType, requestId: string): string => {
+  const basePath = model === "seedream" 
+    ? "fal-ai/bytedance" 
+    : "fal-ai/nano-banana";
+  return `https://queue.fal.run/${basePath}/requests/${requestId}/status`;
+};
+
+const getResultUrl = (model: ModelType, requestId: string): string => {
+  const basePath = model === "seedream" 
+    ? "fal-ai/bytedance" 
+    : "fal-ai/nano-banana";
+  return `https://queue.fal.run/${basePath}/requests/${requestId}`;
+};
+
+const pollResult = async (model: ModelType, requestId: string): Promise<string> => {
+  const statusUrl = getStatusUrl(model, requestId);
   
   while (true) {
     const response = await fetch(statusUrl, {
@@ -60,7 +74,7 @@ const pollResult = async (requestId: string): Promise<any> => {
     const status = await response.json();
 
     if (status.status === "COMPLETED") {
-      return status.response_url;
+      return getResultUrl(model, requestId);
     } else if (status.status === "FAILED") {
       throw new Error("Generation failed");
     }
@@ -89,7 +103,7 @@ export const generateImage = async ({ prompt, model }: GenerateImageParams): Pro
   const payload = { prompt };
   
   const requestId = await submitRequest(url, payload);
-  const resultUrl = await pollResult(requestId);
+  const resultUrl = await pollResult(model, requestId);
   return await fetchResult(resultUrl);
 };
 
@@ -101,6 +115,6 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
   };
   
   const requestId = await submitRequest(url, payload);
-  const resultUrl = await pollResult(requestId);
+  const resultUrl = await pollResult(model, requestId);
   return await fetchResult(resultUrl);
 };
