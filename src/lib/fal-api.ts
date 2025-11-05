@@ -109,10 +109,14 @@ export const generateImage = async ({ prompt, model }: GenerateImageParams): Pro
 
 export const editImage = async ({ prompt, images, model }: EditImageParams): Promise<string> => {
   const url = getModelUrl(model, true);
-  const payload = {
+  const payload: any = {
     prompt,
-    image_url: images[0],
+    image_urls: images,
   };
+  
+  if (model === "seedream") {
+    payload.enable_safety_checker = false;
+  }
   
   const requestId = await submitRequest(url, payload);
   const resultUrl = await pollResult(model, requestId);
