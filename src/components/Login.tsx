@@ -47,14 +47,20 @@ export const Login = ({ onLogin }: LoginProps) => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                placeholder="Enter username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
+              <Label>Choose your name</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {['Albin', 'Cora', 'Umi', 'Leo'].map((name) => (
+                  <Button
+                    key={name}
+                    type="button"
+                    variant={username === name ? "default" : "outline"}
+                    onClick={() => setUsername(name)}
+                    className="w-full"
+                  >
+                    {name}
+                  </Button>
+                ))}
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -67,12 +73,12 @@ export const Login = ({ onLogin }: LoginProps) => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={!username}>
               Sign In
             </Button>
           </form>
           <p className="text-xs text-muted-foreground text-center mt-4">
-            Try: Albin, Cora, Umi, or Leo (password: pass123)
+            Password: pass123
           </p>
         </CardContent>
       </Card>
