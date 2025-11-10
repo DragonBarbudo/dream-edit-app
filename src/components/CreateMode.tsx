@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { generateImage, type ModelType } from '@/lib/fal-api';
 import { saveImage } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Copy } from 'lucide-react';
 
 interface CreateModeProps {
   onImageGenerated: () => void;
@@ -106,12 +106,26 @@ export const CreateMode = ({ onImageGenerated }: CreateModeProps) => {
 
       {generatedImage && (
         <Card className="glass overflow-hidden">
-          <CardContent className="p-0">
+          <CardContent className="p-4 space-y-3">
             <img 
               src={generatedImage} 
               alt="Generated" 
-              className="w-full h-auto"
+              className="w-full h-auto rounded-lg"
             />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                navigator.clipboard.writeText(generatedImage);
+                toast({
+                  title: "Copied!",
+                  description: "Image URL copied to clipboard",
+                });
+              }}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Copy to Clipboard
+            </Button>
           </CardContent>
         </Card>
       )}

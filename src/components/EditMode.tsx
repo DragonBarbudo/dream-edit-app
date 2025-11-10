@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { editImage, type ModelType } from '@/lib/fal-api';
 import { saveImage } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Upload, X, Wand2 } from 'lucide-react';
+import { Loader2, Upload, X, Wand2, Copy } from 'lucide-react';
 
 interface EditModeProps {
   onImageGenerated: () => void;
@@ -17,19 +17,30 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState<ModelType>('nano-banana');
   const [loading, setLoading] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setUploadedImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    const readers: Promise<string>[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      readers.push(
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        })
+      );
+    }
+
+    Promise.all(readers).then((images) => {
+      setUploadedImages(images);
+    });
   };
 
   const handleEdit = async () => {
@@ -42,10 +53,10 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
       return;
     }
 
-    if (!uploadedImage) {
+    if (uploadedImages.length === 0) {
       toast({
         title: "Image required",
-        description: "Please upload an image to edit",
+        description: "Please upload at least one image to edit",
         variant: "destructive",
       });
       return;
@@ -57,7 +68,7 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
     try {
       const imageUrl = await editImage({ 
         prompt, 
-        images: [uploadedImage], 
+        images: uploadedImages, 
         model 
       });
       setGeneratedImage(imageUrl);
@@ -84,30 +95,44 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
       <Card className="glass">
         <CardContent className="pt-6 space-y-4">
           <div className="space-y-2">
-            <Label>Upload Image</Label>
-            {uploadedImage ? (
-              <div className="relative">
-                <img 
-                  src={uploadedImage} 
-                  alt="Upload preview" 
-                  className="w-full h-48 object-cover rounded-lg"
-                />
+            <Label>Upload Images (Multiple)</Label>
+            {uploadedImages.length > 0 ? (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {uploadedImages.map((image, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={image} 
+                        alt={`Upload preview ${index + 1}`} 
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="absolute top-2 right-2"
+                        onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
                 <Button
-                  size="icon"
-                  variant="destructive"
-                  className="absolute top-2 right-2"
-                  onClick={() => setUploadedImage(null)}
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setUploadedImages([])}
                 >
-                  <X className="h-4 w-4" />
+                  Clear All
                 </Button>
               </div>
             ) : (
               <label className="flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
                 <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Click to upload image</span>
+                <span className="text-sm text-muted-foreground">Click to upload images</span>
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleImageUpload}
                   className="hidden"
                 />
@@ -142,7 +167,7 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
 
           <Button 
             onClick={handleEdit} 
-            disabled={loading || !prompt.trim() || !uploadedImage}
+            disabled={loading || !prompt.trim() || uploadedImages.length === 0}
             className="w-full"
             size="lg"
           >
@@ -163,12 +188,26 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
 
       {generatedImage && (
         <Card className="glass overflow-hidden">
-          <CardContent className="p-0">
+          <CardContent className="p-4 space-y-3">
             <img 
               src={generatedImage} 
               alt="Edited result" 
-              className="w-full h-auto"
+              className="w-full h-auto rounded-lg"
             />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                navigator.clipboard.writeText(generatedImage);
+                toast({
+                  title: "Copied!",
+                  description: "Image URL copied to clipboard",
+                });
+              }}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Copy to Clipboard
+            </Button>
           </CardContent>
         </Card>
       )}
