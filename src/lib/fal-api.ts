@@ -1,6 +1,6 @@
 const FAL_API_KEY = "13fe9b5c-2e15-4e69-9cf0-d07ebff933ac:b4a976faa9a01bb5d0ce0b5602c93535";
 
-export type ModelType = "seedream" | "nano-banana";
+export type ModelType = "seedream" | "nano-banana" | "wan-25";
 
 export interface GenerateImageParams {
   prompt: string;
@@ -13,11 +13,19 @@ export interface EditImageParams {
   model: ModelType;
 }
 
+export interface GenerateVideoParams {
+  prompt: string;
+  image: string;
+  duration: 5 | 10;
+}
+
 const getModelUrl = (model: ModelType, isEdit: boolean): string => {
   if (model === "seedream") {
     return isEdit 
       ? "https://queue.fal.run/fal-ai/bytedance/seedream/v4/edit"
       : "https://queue.fal.run/fal-ai/bytedance/seedream/v4/text-to-image";
+  } else if (model === "wan-25") {
+    return "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
   } else {
     return isEdit
       ? "https://queue.fal.run/fal-ai/nano-banana/edit"
@@ -46,6 +54,8 @@ const submitRequest = async (url: string, payload: any): Promise<string> => {
 const getStatusUrl = (model: ModelType, requestId: string): string => {
   const basePath = model === "seedream" 
     ? "fal-ai/bytedance" 
+    : model === "wan-25"
+    ? "fal-ai/wan-25-preview"
     : "fal-ai/nano-banana";
   return `https://queue.fal.run/${basePath}/requests/${requestId}/status`;
 };
@@ -53,6 +63,8 @@ const getStatusUrl = (model: ModelType, requestId: string): string => {
 const getResultUrl = (model: ModelType, requestId: string): string => {
   const basePath = model === "seedream" 
     ? "fal-ai/bytedance" 
+    : model === "wan-25"
+    ? "fal-ai/wan-25-preview"
     : "fal-ai/nano-banana";
   return `https://queue.fal.run/${basePath}/requests/${requestId}`;
 };
@@ -83,7 +95,7 @@ const pollResult = async (model: ModelType, requestId: string): Promise<string> 
   }
 };
 
-const fetchResult = async (resultUrl: string): Promise<string> => {
+const fetchResult = async (resultUrl: string, isVideo: boolean = false): Promise<string> => {
   const response = await fetch(resultUrl, {
     headers: {
       "Authorization": `Key ${FAL_API_KEY}`,
@@ -95,7 +107,7 @@ const fetchResult = async (resultUrl: string): Promise<string> => {
   }
 
   const result = await response.json();
-  return result.images?.[0]?.url || result.image?.url;
+  return isVideo ? result.video?.url : (result.images?.[0]?.url || result.image?.url);
 };
 
 export const generateImage = async ({ prompt, model }: GenerateImageParams): Promise<string> => {
@@ -121,4 +133,19 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
   const requestId = await submitRequest(url, payload);
   const resultUrl = await pollResult(model, requestId);
   return await fetchResult(resultUrl);
+};
+
+export const generateVideo = async ({ prompt, image, duration }: GenerateVideoParams): Promise<string> => {
+  const url = "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
+  const payload = {
+    prompt,
+    image_url: image,
+    enable_safety_checker: false,
+    resolution: "480p",
+    duration,
+  };
+  
+  const requestId = await submitRequest(url, payload);
+  const resultUrl = await pollResult("wan-25", requestId);
+  return await fetchResult(resultUrl, true);
 };

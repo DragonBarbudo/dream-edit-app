@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateMode } from './CreateMode';
 import { EditMode } from './EditMode';
+import { VideoMode } from './VideoMode';
 import { Gallery } from './Gallery';
 import { Sparkles } from 'lucide-react';
 
@@ -24,9 +25,10 @@ export const MainApp = () => {
         </Card>
 
         <Tabs defaultValue="create" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 glass">
+          <TabsList className="grid w-full grid-cols-4 glass">
             <TabsTrigger value="create">Create</TabsTrigger>
             <TabsTrigger value="edit">Edit</TabsTrigger>
+            <TabsTrigger value="video">Video</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
           </TabsList>
 
@@ -36,6 +38,10 @@ export const MainApp = () => {
 
           <TabsContent value="edit" className="mt-6">
             <EditMode onImageGenerated={() => setGalleryRefresh(prev => prev + 1)} />
+          </TabsContent>
+
+          <TabsContent value="video" className="mt-6">
+            <VideoMode onVideoGenerated={() => setGalleryRefresh(prev => prev + 1)} />
           </TabsContent>
 
           <TabsContent value="gallery" className="mt-6">
