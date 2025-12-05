@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getImages, deleteImage, type GeneratedImage } from '@/lib/storage';
@@ -9,16 +10,20 @@ interface GalleryProps {
 }
 
 export const Gallery = ({ refreshKey }: GalleryProps) => {
-  const images = getImages();
+  const [images, setImages] = useState<GeneratedImage[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setImages(getImages());
+  }, [refreshKey]);
 
   const handleDelete = (id: string) => {
     deleteImage(id);
+    setImages(getImages());
     toast({
       title: "Image deleted",
       description: "The image has been removed from your gallery",
     });
-    window.location.reload();
   };
 
   const handleDownload = async (image: GeneratedImage) => {
