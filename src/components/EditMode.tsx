@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -19,28 +19,46 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
   const [loading, setLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const processFiles = useCallback((files: FileList | File[]) => {
+    const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'));
+    if (fileArray.length === 0) return;
 
-    const readers: Promise<string>[] = [];
-    
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      readers.push(
-        new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        })
-      );
-    }
+    const readers: Promise<string>[] = fileArray.map(file =>
+      new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      })
+    );
 
     Promise.all(readers).then((images) => {
       setUploadedImages(images);
     });
+  }, []);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) processFiles(files);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files) processFiles(files);
   };
 
   const handleEdit = async () => {
@@ -126,9 +144,16 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
                 </Button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
+              <label 
+                className={`flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                  isDragging ? 'border-primary bg-primary/10' : 'hover:bg-accent/50'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Click to upload images</span>
+                <span className="text-sm text-muted-foreground">Click or drop images here</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -160,7 +185,7 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="nano-banana">Nano Banana</SelectItem>
-                <SelectItem value="seedream">Seedream v4</SelectItem>
+                <SelectItem value="seedream">Seedream v4.5</SelectItem>
               </SelectContent>
             </Select>
           </div>

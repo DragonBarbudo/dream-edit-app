@@ -22,8 +22,8 @@ export interface GenerateVideoParams {
 const getModelUrl = (model: ModelType, isEdit: boolean): string => {
   if (model === "seedream") {
     return isEdit 
-      ? "https://queue.fal.run/fal-ai/bytedance/seedream/v4/edit"
-      : "https://queue.fal.run/fal-ai/bytedance/seedream/v4/text-to-image";
+      ? "https://queue.fal.run/fal-ai/bytedance/seedream/v4.5/edit"
+      : "https://queue.fal.run/fal-ai/bytedance/seedream/v4.5/text-to-image";
   } else if (model === "wan-25") {
     return "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
   } else {
