@@ -78,7 +78,8 @@ export const CreateMode = ({ onImageGenerated }: CreateModeProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="nano-banana">Nano Banana</SelectItem>
-                <SelectItem value="seedream">Seedream v4</SelectItem>
+                <SelectItem value="seedream">Seedream v4.5</SelectItem>
+                <SelectItem value="z-image">Z-Image Turbo</SelectItem>
               </SelectContent>
             </Select>
           </div>
