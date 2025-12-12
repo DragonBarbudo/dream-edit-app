@@ -1,6 +1,6 @@
 const FAL_API_KEY = "13fe9b5c-2e15-4e69-9cf0-d07ebff933ac:b4a976faa9a01bb5d0ce0b5602c93535";
 
-export type ModelType = "seedream" | "nano-banana" | "wan-25";
+export type ModelType = "seedream" | "nano-banana" | "wan-25" | "z-image";
 
 export interface GenerateImageParams {
   prompt: string;
@@ -26,6 +26,10 @@ const getModelUrl = (model: ModelType, isEdit: boolean): string => {
       : "https://queue.fal.run/fal-ai/bytedance/seedream/v4.5/text-to-image";
   } else if (model === "wan-25") {
     return "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
+  } else if (model === "z-image") {
+    return isEdit
+      ? "https://queue.fal.run/fal-ai/z-image/turbo/image-to-image"
+      : "https://queue.fal.run/fal-ai/z-image/turbo";
   } else {
     return isEdit
       ? "https://queue.fal.run/fal-ai/nano-banana/edit"
@@ -56,6 +60,8 @@ const getStatusUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/bytedance" 
     : model === "wan-25"
     ? "fal-ai/wan-25-preview"
+    : model === "z-image"
+    ? "fal-ai/z-image"
     : "fal-ai/nano-banana";
   return `https://queue.fal.run/${basePath}/requests/${requestId}/status`;
 };
@@ -65,6 +71,8 @@ const getResultUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/bytedance" 
     : model === "wan-25"
     ? "fal-ai/wan-25-preview"
+    : model === "z-image"
+    ? "fal-ai/z-image"
     : "fal-ai/nano-banana";
   return `https://queue.fal.run/${basePath}/requests/${requestId}`;
 };
@@ -112,7 +120,11 @@ const fetchResult = async (resultUrl: string, isVideo: boolean = false): Promise
 
 export const generateImage = async ({ prompt, model }: GenerateImageParams): Promise<string> => {
   const url = getModelUrl(model, false);
-  const payload = { prompt };
+  const payload: any = { prompt };
+  
+  if (model === "z-image") {
+    payload.enable_safety_checker = false;
+  }
   
   const requestId = await submitRequest(url, payload);
   const resultUrl = await pollResult(model, requestId);
@@ -126,7 +138,7 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
     image_urls: images,
   };
   
-  if (model === "seedream") {
+  if (model === "seedream" || model === "z-image") {
     payload.enable_safety_checker = false;
   }
   
