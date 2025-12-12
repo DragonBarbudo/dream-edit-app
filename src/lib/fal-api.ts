@@ -133,13 +133,17 @@ export const generateImage = async ({ prompt, model }: GenerateImageParams): Pro
 
 export const editImage = async ({ prompt, images, model }: EditImageParams): Promise<string> => {
   const url = getModelUrl(model, true);
-  const payload: any = {
-    prompt,
-    image_urls: images,
-  };
+  const payload: any = { prompt };
   
-  if (model === "seedream" || model === "z-image") {
+  if (model === "z-image") {
+    // z-image only accepts a single image via image_url
+    payload.image_url = images[0];
     payload.enable_safety_checker = false;
+  } else {
+    payload.image_urls = images;
+    if (model === "seedream") {
+      payload.enable_safety_checker = false;
+    }
   }
   
   const requestId = await submitRequest(url, payload);
