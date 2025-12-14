@@ -185,6 +185,7 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="nano-banana">Nano Banana</SelectItem>
+                <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
                 <SelectItem value="seedream">Seedream v4.5</SelectItem>
                 <SelectItem value="z-image">Z-Image Turbo</SelectItem>
               </SelectContent>

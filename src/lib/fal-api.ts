@@ -1,6 +1,6 @@
 const FAL_API_KEY = "13fe9b5c-2e15-4e69-9cf0-d07ebff933ac:b4a976faa9a01bb5d0ce0b5602c93535";
 
-export type ModelType = "seedream" | "nano-banana" | "wan-25" | "z-image";
+export type ModelType = "seedream" | "nano-banana" | "nano-banana-pro" | "wan-25" | "z-image";
 
 export interface GenerateImageParams {
   prompt: string;
@@ -30,6 +30,10 @@ const getModelUrl = (model: ModelType, isEdit: boolean): string => {
     return isEdit
       ? "https://queue.fal.run/fal-ai/z-image/turbo/image-to-image"
       : "https://queue.fal.run/fal-ai/z-image/turbo";
+  } else if (model === "nano-banana-pro") {
+    return isEdit
+      ? "https://queue.fal.run/fal-ai/nano-banana-pro"
+      : "https://queue.fal.run/fal-ai/nano-banana-pro";
   } else {
     return isEdit
       ? "https://queue.fal.run/fal-ai/nano-banana/edit"
@@ -62,6 +66,8 @@ const getStatusUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/wan-25-preview"
     : model === "z-image"
     ? "fal-ai/z-image"
+    : model === "nano-banana-pro"
+    ? "fal-ai/nano-banana-pro"
     : "fal-ai/nano-banana";
   return `https://queue.fal.run/${basePath}/requests/${requestId}/status`;
 };
@@ -73,6 +79,8 @@ const getResultUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/wan-25-preview"
     : model === "z-image"
     ? "fal-ai/z-image"
+    : model === "nano-banana-pro"
+    ? "fal-ai/nano-banana-pro"
     : "fal-ai/nano-banana";
   return `https://queue.fal.run/${basePath}/requests/${requestId}`;
 };
@@ -124,6 +132,8 @@ export const generateImage = async ({ prompt, model }: GenerateImageParams): Pro
   
   if (model === "z-image") {
     payload.enable_safety_checker = false;
+  } else if (model === "nano-banana-pro") {
+    payload.enable_web_search = true;
   }
   
   const requestId = await submitRequest(url, payload);
@@ -139,6 +149,9 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
     // z-image only accepts a single image via image_url
     payload.image_url = images[0];
     payload.enable_safety_checker = false;
+  } else if (model === "nano-banana-pro") {
+    payload.image_urls = images;
+    payload.enable_web_search = true;
   } else {
     payload.image_urls = images;
     if (model === "seedream") {
