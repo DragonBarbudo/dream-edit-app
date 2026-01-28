@@ -8,6 +8,7 @@ import { editImage, type ModelType } from '@/lib/fal-api';
 import { saveImage } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, X, Wand2, Copy } from 'lucide-react';
+import { ImageCompare } from './ImageCompare';
 
 interface EditModeProps {
   onImageGenerated: () => void;
@@ -213,13 +214,14 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
         </CardContent>
       </Card>
 
-      {generatedImage && (
+      {generatedImage && uploadedImages.length > 0 && (
         <Card className="glass overflow-hidden">
           <CardContent className="p-4 space-y-3">
-            <img 
-              src={generatedImage} 
-              alt="Edited result" 
-              className="w-full h-auto rounded-lg"
+            <ImageCompare
+              beforeImage={uploadedImages[0]}
+              afterImage={generatedImage}
+              beforeLabel="Original"
+              afterLabel="Edited"
             />
             <Button
               variant="outline"
