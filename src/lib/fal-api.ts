@@ -13,10 +13,13 @@ export interface EditImageParams {
   model: ModelType;
 }
 
+export type VideoModelType = "wan-25" | "seedance";
+
 export interface GenerateVideoParams {
   prompt: string;
   image: string;
-  duration: 5 | 10;
+  duration: number;
+  videoModel: VideoModelType;
 }
 
 const getModelUrl = (model: ModelType, isEdit: boolean): string => {
@@ -164,8 +167,10 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
   return await fetchResult(resultUrl);
 };
 
-export const generateVideo = async ({ prompt, image, duration }: GenerateVideoParams): Promise<string> => {
-  const url = "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
+export const generateVideo = async ({ prompt, image, duration, videoModel }: GenerateVideoParams): Promise<string> => {
+  const url = videoModel === "seedance"
+    ? "https://queue.fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video"
+    : "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
   const payload = {
     prompt,
     image_url: image,
@@ -174,7 +179,29 @@ export const generateVideo = async ({ prompt, image, duration }: GenerateVideoPa
     duration,
   };
   
+  const model: ModelType = videoModel === "seedance" ? "seedream" : "wan-25";
   const requestId = await submitRequest(url, payload);
+  
+  // For seedance, we need custom status/result URLs
+  if (videoModel === "seedance") {
+    const statusUrl = `https://queue.fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video/requests/${requestId}/status`;
+    const resultUrlBase = `https://queue.fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video/requests/${requestId}`;
+    
+    while (true) {
+      const response = await fetch(statusUrl, {
+        headers: { "Authorization": `Key ${FAL_API_KEY}` },
+      });
+      if (!response.ok) throw new Error(`Status check failed: ${response.statusText}`);
+      const status = await response.json();
+      if (status.status === "COMPLETED") {
+        return await fetchResult(resultUrlBase, true);
+      } else if (status.status === "FAILED") {
+        throw new Error("Generation failed");
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+  
   const resultUrl = await pollResult("wan-25", requestId);
   return await fetchResult(resultUrl, true);
 };
