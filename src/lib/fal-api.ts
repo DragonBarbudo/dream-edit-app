@@ -179,13 +179,12 @@ export const generateVideo = async ({ prompt, image, duration, videoModel }: Gen
     duration,
   };
   
-  const model: ModelType = videoModel === "seedance" ? "seedream" : "wan-25";
   const requestId = await submitRequest(url, payload);
   
-  // For seedance, we need custom status/result URLs
+  // For seedance, use fal-ai/bytedance base path for status/result (per API docs)
   if (videoModel === "seedance") {
-    const statusUrl = `https://queue.fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video/requests/${requestId}/status`;
-    const resultUrlBase = `https://queue.fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video/requests/${requestId}`;
+    const statusUrl = `https://queue.fal.run/fal-ai/bytedance/requests/${requestId}/status`;
+    const resultUrlBase = `https://queue.fal.run/fal-ai/bytedance/requests/${requestId}`;
     
     while (true) {
       const response = await fetch(statusUrl, {
