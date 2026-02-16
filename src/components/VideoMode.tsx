@@ -4,7 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { generateVideo } from '@/lib/fal-api';
+import { generateVideo, VideoModelType } from '@/lib/fal-api';
 import { saveImage } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, X, Video, Copy } from 'lucide-react';
@@ -15,7 +15,8 @@ interface VideoModeProps {
 
 export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
   const [prompt, setPrompt] = useState('');
-  const [duration, setDuration] = useState<5 | 10>(5);
+  const [duration, setDuration] = useState<number>(5);
+  const [videoModel, setVideoModel] = useState<VideoModelType>('wan-25');
   const [loading, setLoading] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
@@ -79,7 +80,8 @@ export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
       const videoUrl = await generateVideo({ 
         prompt, 
         image: uploadedImage,
-        duration 
+        duration,
+        videoModel,
       });
       setGeneratedVideo(videoUrl);
       saveImage({ url: videoUrl, prompt, model: 'wan-25' });
@@ -156,14 +158,37 @@ export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="video-model">Model</Label>
+            <Select value={videoModel} onValueChange={(value) => setVideoModel(value as VideoModelType)}>
+              <SelectTrigger id="video-model">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="wan-25">Wan 2.5</SelectItem>
+                <SelectItem value="seedance">Seedance 1.5</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="duration">Duration</Label>
-            <Select value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value) as 5 | 10)}>
+            <Select value={duration.toString()} onValueChange={(value) => setDuration(parseInt(value))}>
               <SelectTrigger id="duration">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="5">5 seconds</SelectItem>
-                <SelectItem value="10">10 seconds</SelectItem>
+                {videoModel === "seedance" ? (
+                  <>
+                    {[4,5,6,7,8,9,10,11,12].map(d => (
+                      <SelectItem key={d} value={d.toString()}>{d} seconds</SelectItem>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="5">5 seconds</SelectItem>
+                    <SelectItem value="10">10 seconds</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
