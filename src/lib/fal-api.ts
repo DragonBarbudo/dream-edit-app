@@ -20,6 +20,7 @@ export interface GenerateVideoParams {
   image: string;
   duration: number;
   videoModel: VideoModelType;
+  aspectRatio?: string;
 }
 
 const getModelUrl = (model: ModelType, isEdit: boolean): string => {
@@ -167,17 +168,21 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
   return await fetchResult(resultUrl);
 };
 
-export const generateVideo = async ({ prompt, image, duration, videoModel }: GenerateVideoParams): Promise<string> => {
+export const generateVideo = async ({ prompt, image, duration, videoModel, aspectRatio }: GenerateVideoParams): Promise<string> => {
   const url = videoModel === "seedance"
     ? "https://queue.fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video"
     : "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
-  const payload = {
+  const payload: any = {
     prompt,
     image_url: image,
     enable_safety_checker: false,
     resolution: "480p",
     duration,
   };
+  
+  if (videoModel === "seedance" && aspectRatio) {
+    payload.aspect_ratio = aspectRatio;
+  }
   
   const requestId = await submitRequest(url, payload);
   
