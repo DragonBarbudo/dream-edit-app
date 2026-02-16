@@ -17,6 +17,7 @@ export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
   const [prompt, setPrompt] = useState('');
   const [duration, setDuration] = useState<number>(5);
   const [videoModel, setVideoModel] = useState<VideoModelType>('wan-25');
+  const [aspectRatio, setAspectRatio] = useState('16:9');
   const [loading, setLoading] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
@@ -82,6 +83,7 @@ export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
         image: uploadedImage,
         duration,
         videoModel,
+        aspectRatio: videoModel === "seedance" ? aspectRatio : undefined,
       });
       setGeneratedVideo(videoUrl);
       saveImage({ url: videoUrl, prompt, model: 'wan-25' });
@@ -192,6 +194,22 @@ export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
               </SelectContent>
             </Select>
           </div>
+
+          {videoModel === "seedance" && (
+            <div className="space-y-2">
+              <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
+              <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                <SelectTrigger id="aspect-ratio">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"].map(r => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <Button 
             onClick={handleGenerate} 
