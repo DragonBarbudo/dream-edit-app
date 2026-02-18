@@ -181,6 +181,7 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
     payload = {
       prompt,
       image_urls: [image],
+      enable_safety_checker: false,
       resolution: "720p",
       duration,
     };
