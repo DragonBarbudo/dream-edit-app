@@ -83,7 +83,7 @@ export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
         image: uploadedImage,
         duration,
         videoModel,
-        aspectRatio: videoModel === "seedance" ? aspectRatio : undefined,
+        aspectRatio: (videoModel === "seedance" || videoModel === "wan-26") ? aspectRatio : undefined,
       });
       setGeneratedVideo(videoUrl);
       saveImage({ url: videoUrl, prompt, model: 'wan-25' });
@@ -201,7 +201,7 @@ export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
             </Select>
           </div>
 
-          {videoModel === "seedance" && (
+          {(videoModel === "seedance" || videoModel === "wan-26") && (
             <div className="space-y-2">
               <Label htmlFor="aspect-ratio">Aspect Ratio</Label>
               <Select value={aspectRatio} onValueChange={setAspectRatio}>
