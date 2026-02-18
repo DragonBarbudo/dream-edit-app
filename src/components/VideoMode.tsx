@@ -167,6 +167,7 @@ export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="wan-25">Wan 2.5</SelectItem>
+                <SelectItem value="wan-26">Wan 2.6</SelectItem>
                 <SelectItem value="seedance">Seedance 1.5</SelectItem>
               </SelectContent>
             </Select>
@@ -184,6 +185,11 @@ export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
                     {[4,5,6,7,8,9,10,11,12].map(d => (
                       <SelectItem key={d} value={d.toString()}>{d} seconds</SelectItem>
                     ))}
+                  </>
+                ) : videoModel === "wan-26" ? (
+                  <>
+                    <SelectItem value="5">5 seconds</SelectItem>
+                    <SelectItem value="10">10 seconds</SelectItem>
                   </>
                 ) : (
                   <>
