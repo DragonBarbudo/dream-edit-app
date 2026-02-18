@@ -175,14 +175,25 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
     ? "https://queue.fal.run/wan/v2.6/reference-to-video/flash"
     : "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
 
-  const payload: any = {
-    prompt,
-    image_url: image,
-    enable_safety_checker: false,
-    resolution: "480p",
-    duration,
-  };
-  
+  let payload: any;
+
+  if (videoModel === "wan-26") {
+    payload = {
+      prompt,
+      image_urls: [image],
+      resolution: "720p",
+      duration,
+    };
+  } else {
+    payload = {
+      prompt,
+      image_url: image,
+      enable_safety_checker: false,
+      resolution: "480p",
+      duration,
+    };
+  }
+
   if (videoModel === "seedance" && aspectRatio) {
     payload.aspect_ratio = aspectRatio;
   }
