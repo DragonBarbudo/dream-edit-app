@@ -5,15 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { generateImage, type ModelType } from '@/lib/fal-api';
-import { saveImage } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles, Copy } from 'lucide-react';
 
-interface CreateModeProps {
-  onImageGenerated: () => void;
-}
-
-export const CreateMode = ({ onImageGenerated }: CreateModeProps) => {
+export const CreateMode = () => {
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState<ModelType>('nano-banana');
   const [loading, setLoading] = useState(false);
@@ -36,9 +31,6 @@ export const CreateMode = ({ onImageGenerated }: CreateModeProps) => {
     try {
       const imageUrl = await generateImage({ prompt, model });
       setGeneratedImage(imageUrl);
-      saveImage({ url: imageUrl, prompt, model });
-      onImageGenerated();
-      
       toast({
         title: "Image generated!",
         description: "Your image has been created successfully",

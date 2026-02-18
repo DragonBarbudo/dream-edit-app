@@ -5,16 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { editImage, type ModelType } from '@/lib/fal-api';
-import { saveImage } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, X, Wand2, Copy } from 'lucide-react';
 import { ImageCompare } from './ImageCompare';
 
-interface EditModeProps {
-  onImageGenerated: () => void;
-}
-
-export const EditMode = ({ onImageGenerated }: EditModeProps) => {
+export const EditMode = () => {
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState<ModelType>('nano-banana');
   const [loading, setLoading] = useState(false);
@@ -85,15 +80,8 @@ export const EditMode = ({ onImageGenerated }: EditModeProps) => {
     setGeneratedImage(null);
 
     try {
-      const imageUrl = await editImage({ 
-        prompt, 
-        images: uploadedImages, 
-        model 
-      });
+      const imageUrl = await editImage({ prompt, images: uploadedImages, model });
       setGeneratedImage(imageUrl);
-      saveImage({ url: imageUrl, prompt, model });
-      onImageGenerated();
-      
       toast({
         title: "Image edited!",
         description: "Your edited image is ready",

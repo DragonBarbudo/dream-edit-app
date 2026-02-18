@@ -5,15 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { generateVideo, VideoModelType } from '@/lib/fal-api';
-import { saveImage } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, X, Video, Copy } from 'lucide-react';
 
-interface VideoModeProps {
-  onVideoGenerated: () => void;
-}
-
-export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
+export const VideoMode = () => {
   const [prompt, setPrompt] = useState('');
   const [duration, setDuration] = useState<number>(5);
   const [videoModel, setVideoModel] = useState<VideoModelType>('wan-25');
@@ -86,9 +81,6 @@ export const VideoMode = ({ onVideoGenerated }: VideoModeProps) => {
         aspectRatio: (videoModel === "seedance" || videoModel === "wan-26") ? aspectRatio : undefined,
       });
       setGeneratedVideo(videoUrl);
-      saveImage({ url: videoUrl, prompt, model: 'wan-25' });
-      onVideoGenerated();
-      
       toast({
         title: "Video generated!",
         description: "Your animated video is ready",
