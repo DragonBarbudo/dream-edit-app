@@ -184,6 +184,7 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
       enable_safety_checker: false,
       resolution: "720p",
       duration,
+      ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
     };
   } else {
     payload = {
