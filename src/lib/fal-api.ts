@@ -74,6 +74,8 @@ const getStatusUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/z-image"
     : model === "nano-banana-pro"
     ? "fal-ai/nano-banana-pro"
+    : model === "nano-banana-2"
+    ? "fal-ai/nano-banana-2"
     : "fal-ai/nano-banana";
   return `https://queue.fal.run/${basePath}/requests/${requestId}/status`;
 };
