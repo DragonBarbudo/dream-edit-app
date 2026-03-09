@@ -3,10 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import { generateImage, type ModelType } from '@/lib/fal-api';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Copy } from 'lucide-react';
+import { Loader2, Zap, Copy } from 'lucide-react';
 
 export const CreateMode = () => {
   const [prompt, setPrompt] = useState('');
@@ -17,30 +16,17 @@ export const CreateMode = () => {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      toast({
-        title: "Prompt required",
-        description: "Please enter a description for your image",
-        variant: "destructive",
-      });
+      toast({ title: "Prompt required", description: "Please enter a description for your image", variant: "destructive" });
       return;
     }
-
     setLoading(true);
     setGeneratedImage(null);
-
     try {
       const imageUrl = await generateImage({ prompt, model });
       setGeneratedImage(imageUrl);
-      toast({
-        title: "Image generated!",
-        description: "Your image has been created successfully",
-      });
+      toast({ title: "Image generated!", description: "Your image has been created successfully" });
     } catch (error) {
-      toast({
-        title: "Generation failed",
-        description: error instanceof Error ? error.message : "Failed to generate image",
-        variant: "destructive",
-      });
+      toast({ title: "Generation failed", description: error instanceof Error ? error.message : "Failed to generate image", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -48,81 +34,65 @@ export const CreateMode = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="glass">
-        <CardContent className="pt-6 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="prompt">Prompt</Label>
-            <Textarea
-              id="prompt"
-              placeholder="Describe the image you want to create..."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={4}
-              className="resize-none"
-            />
-          </div>
+      <div className="border border-border bg-card p-6 space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="prompt" className="font-mono uppercase text-xs tracking-wider text-muted-foreground">Prompt</Label>
+          <Textarea
+            id="prompt"
+            placeholder="Describe the image you want to create..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            rows={4}
+            className="resize-none rounded-none bg-muted border-border font-mono text-sm"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="model">Model</Label>
-            <Select value={model} onValueChange={(value) => setModel(value as ModelType)}>
-              <SelectTrigger id="model">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="nano-banana">Nano Banana</SelectItem>
-                <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
-                <SelectItem value="seedream">Seedream v4.5</SelectItem>
-                <SelectItem value="nano-banana-2">Nano Banana 2</SelectItem>
-                <SelectItem value="z-image">Z-Image Turbo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="model" className="font-mono uppercase text-xs tracking-wider text-muted-foreground">Model</Label>
+          <Select value={model} onValueChange={(value) => setModel(value as ModelType)}>
+            <SelectTrigger id="model" className="rounded-none bg-muted border-border font-mono text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-none bg-card border-border">
+              <SelectItem value="nano-banana">Nano Banana</SelectItem>
+              <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
+              <SelectItem value="seedream">Seedream v4.5</SelectItem>
+              <SelectItem value="nano-banana-2">Nano Banana 2</SelectItem>
+              <SelectItem value="z-image">Z-Image Turbo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-          <Button 
-            onClick={handleGenerate} 
-            disabled={loading || !prompt.trim()}
-            className="w-full"
-            size="lg"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate Image
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+        <Button
+          onClick={handleGenerate}
+          disabled={loading || !prompt.trim()}
+          className="w-full rounded-none font-mono uppercase tracking-wider h-12"
+          size="lg"
+        >
+          {loading ? (
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</>
+          ) : (
+            <><Zap className="mr-2 h-4 w-4" />Generate</>
+          )}
+        </Button>
+      </div>
 
       {generatedImage && (
-        <Card className="glass overflow-hidden">
-          <CardContent className="p-4 space-y-3">
-            <img 
-              src={generatedImage} 
-              alt="Generated" 
-              className="w-full h-auto rounded-lg"
-            />
+        <div className="border border-border bg-card overflow-hidden">
+          <img src={generatedImage} alt="Generated" className="w-full h-auto" />
+          <div className="p-4 border-t border-border">
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full rounded-none font-mono uppercase text-xs tracking-wider"
               onClick={() => {
                 navigator.clipboard.writeText(generatedImage);
-                toast({
-                  title: "Copied!",
-                  description: "Image URL copied to clipboard",
-                });
+                toast({ title: "Copied!", description: "Image URL copied to clipboard" });
               }}
             >
-              <Copy className="mr-2 h-4 w-4" />
-              Copy to Clipboard
+              <Copy className="mr-2 h-4 w-4" />Copy URL
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
