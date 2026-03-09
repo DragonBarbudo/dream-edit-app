@@ -1,6 +1,6 @@
 const FAL_API_KEY = "13fe9b5c-2e15-4e69-9cf0-d07ebff933ac:b4a976faa9a01bb5d0ce0b5602c93535";
 
-export type ModelType = "seedream" | "nano-banana" | "nano-banana-pro" | "wan-25" | "z-image";
+export type ModelType = "seedream" | "nano-banana" | "nano-banana-pro" | "nano-banana-2" | "wan-25" | "z-image";
 
 export interface GenerateImageParams {
   prompt: string;
@@ -38,6 +38,8 @@ const getModelUrl = (model: ModelType, isEdit: boolean): string => {
     return isEdit
       ? "https://queue.fal.run/fal-ai/nano-banana-pro"
       : "https://queue.fal.run/fal-ai/nano-banana-pro";
+  } else if (model === "nano-banana-2") {
+    return "https://queue.fal.run/fal-ai/nano-banana-2";
   } else {
     return isEdit
       ? "https://queue.fal.run/fal-ai/nano-banana/edit"
@@ -72,6 +74,8 @@ const getStatusUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/z-image"
     : model === "nano-banana-pro"
     ? "fal-ai/nano-banana-pro"
+    : model === "nano-banana-2"
+    ? "fal-ai/nano-banana-2"
     : "fal-ai/nano-banana";
   return `https://queue.fal.run/${basePath}/requests/${requestId}/status`;
 };
@@ -85,6 +89,8 @@ const getResultUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/z-image"
     : model === "nano-banana-pro"
     ? "fal-ai/nano-banana-pro"
+    : model === "nano-banana-2"
+    ? "fal-ai/nano-banana-2"
     : "fal-ai/nano-banana";
   return `https://queue.fal.run/${basePath}/requests/${requestId}`;
 };
@@ -137,6 +143,9 @@ export const generateImage = async ({ prompt, model }: GenerateImageParams): Pro
   if (model === "z-image") {
     payload.enable_safety_checker = false;
   } else if (model === "nano-banana-pro") {
+    payload.enable_web_search = true;
+  } else if (model === "nano-banana-2") {
+    payload.safety_tolerance = "6";
     payload.enable_web_search = true;
   }
   
