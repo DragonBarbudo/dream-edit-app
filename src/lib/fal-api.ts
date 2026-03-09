@@ -144,6 +144,9 @@ export const generateImage = async ({ prompt, model }: GenerateImageParams): Pro
     payload.enable_safety_checker = false;
   } else if (model === "nano-banana-pro") {
     payload.enable_web_search = true;
+  } else if (model === "nano-banana-2") {
+    payload.safety_tolerance = "6";
+    payload.enable_web_search = true;
   }
   
   const requestId = await submitRequest(url, payload);
