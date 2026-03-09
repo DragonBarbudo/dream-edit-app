@@ -1,6 +1,6 @@
 const FAL_API_KEY = "13fe9b5c-2e15-4e69-9cf0-d07ebff933ac:b4a976faa9a01bb5d0ce0b5602c93535";
 
-export type ModelType = "seedream" | "nano-banana" | "nano-banana-pro" | "wan-25" | "z-image";
+export type ModelType = "seedream" | "nano-banana" | "nano-banana-pro" | "nano-banana-2" | "wan-25" | "z-image";
 
 export interface GenerateImageParams {
   prompt: string;
