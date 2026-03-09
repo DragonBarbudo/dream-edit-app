@@ -38,6 +38,8 @@ const getModelUrl = (model: ModelType, isEdit: boolean): string => {
     return isEdit
       ? "https://queue.fal.run/fal-ai/nano-banana-pro"
       : "https://queue.fal.run/fal-ai/nano-banana-pro";
+  } else if (model === "nano-banana-2") {
+    return "https://queue.fal.run/fal-ai/nano-banana-2";
   } else {
     return isEdit
       ? "https://queue.fal.run/fal-ai/nano-banana/edit"
