@@ -1,6 +1,6 @@
 const FAL_API_KEY = "13fe9b5c-2e15-4e69-9cf0-d07ebff933ac:b4a976faa9a01bb5d0ce0b5602c93535";
 
-export type ModelType = "seedream" | "seedream-v5-lite-edit" | "nano-banana" | "nano-banana-pro" | "nano-banana-2" | "wan-25" | "z-image";
+export type ModelType = "seedream" | "seedream-v5-lite-edit" | "gpt-image-2-edit" | "nano-banana" | "nano-banana-pro" | "nano-banana-2" | "wan-25" | "z-image";
 
 export interface GenerateImageParams {
   prompt: string;
@@ -30,6 +30,8 @@ const getModelUrl = (model: ModelType, isEdit: boolean): string => {
       : "https://queue.fal.run/fal-ai/bytedance/seedream/v4.5/text-to-image";
   } else if (model === "seedream-v5-lite-edit") {
     return "https://queue.fal.run/fal-ai/bytedance/seedream/v5/lite/edit";
+  } else if (model === "gpt-image-2-edit") {
+    return "https://queue.fal.run/openai/gpt-image-2/edit";
   } else if (model === "wan-25") {
     return "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
   } else if (model === "z-image") {
@@ -74,6 +76,8 @@ const getStatusUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/wan-25-preview"
     : model === "z-image"
     ? "fal-ai/z-image"
+    : model === "gpt-image-2-edit"
+    ? "openai/gpt-image-2"
     : model === "nano-banana-pro"
     ? "fal-ai/nano-banana-pro"
     : model === "nano-banana-2"
@@ -89,6 +93,8 @@ const getResultUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/wan-25-preview"
     : model === "z-image"
     ? "fal-ai/z-image"
+    : model === "gpt-image-2-edit"
+    ? "openai/gpt-image-2"
     : model === "nano-banana-pro"
     ? "fal-ai/nano-banana-pro"
     : model === "nano-banana-2"
@@ -164,6 +170,12 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
     // z-image only accepts a single image via image_url
     payload.image_url = images[0];
     payload.enable_safety_checker = false;
+  } else if (model === "gpt-image-2-edit") {
+    payload.image_urls = images;
+    payload.image_size = "auto";
+    payload.quality = "high";
+    payload.num_images = 1;
+    payload.output_format = "png";
   } else if (model === "nano-banana-pro") {
     payload.image_urls = images;
     payload.enable_web_search = true;
