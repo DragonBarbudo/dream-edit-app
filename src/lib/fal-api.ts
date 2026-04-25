@@ -164,8 +164,8 @@ export const generateImage = async ({ prompt, model }: GenerateImageParams): Pro
     payload.enable_web_search = true;
   }
   
-  const requestId = await submitRequest(url, payload);
-  const resultUrl = await pollResult(model, requestId);
+  const request = await submitRequest(url, payload);
+  const resultUrl = await pollResult(model, request.request_id, request.status_url);
   return await fetchResult(resultUrl);
 };
 
@@ -193,8 +193,8 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
     }
   }
   
-  const requestId = await submitRequest(url, payload);
-  const resultUrl = await pollResult(model, requestId);
+  const request = await submitRequest(url, payload);
+  const resultUrl = await pollResult(model, request.request_id, request.status_url);
   return await fetchResult(resultUrl);
 };
 
@@ -240,7 +240,8 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
     payload.aspect_ratio = aspectRatio;
   }
   
-  const requestId = await submitRequest(url, payload);
+  const request = await submitRequest(url, payload);
+  const requestId = request.request_id;
   
   if (videoModel === "seedance") {
     const statusUrl = `https://queue.fal.run/fal-ai/bytedance/requests/${requestId}/status`;
