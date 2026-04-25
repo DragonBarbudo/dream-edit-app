@@ -1,6 +1,6 @@
 const FAL_API_KEY = "13fe9b5c-2e15-4e69-9cf0-d07ebff933ac:b4a976faa9a01bb5d0ce0b5602c93535";
 
-export type ModelType = "seedream" | "nano-banana" | "nano-banana-pro" | "nano-banana-2" | "wan-25" | "z-image";
+export type ModelType = "seedream" | "seedream-v5-lite-edit" | "nano-banana" | "nano-banana-pro" | "nano-banana-2" | "wan-25" | "z-image";
 
 export interface GenerateImageParams {
   prompt: string;
@@ -28,6 +28,8 @@ const getModelUrl = (model: ModelType, isEdit: boolean): string => {
     return isEdit 
       ? "https://queue.fal.run/fal-ai/bytedance/seedream/v4.5/edit"
       : "https://queue.fal.run/fal-ai/bytedance/seedream/v4.5/text-to-image";
+  } else if (model === "seedream-v5-lite-edit") {
+    return "https://queue.fal.run/fal-ai/bytedance/seedream/v5/lite/edit";
   } else if (model === "wan-25") {
     return "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
   } else if (model === "z-image") {
@@ -66,7 +68,7 @@ const submitRequest = async (url: string, payload: any): Promise<string> => {
 };
 
 const getStatusUrl = (model: ModelType, requestId: string): string => {
-  const basePath = model === "seedream" 
+  const basePath = model === "seedream" || model === "seedream-v5-lite-edit" 
     ? "fal-ai/bytedance" 
     : model === "wan-25"
     ? "fal-ai/wan-25-preview"
@@ -81,7 +83,7 @@ const getStatusUrl = (model: ModelType, requestId: string): string => {
 };
 
 const getResultUrl = (model: ModelType, requestId: string): string => {
-  const basePath = model === "seedream" 
+  const basePath = model === "seedream" || model === "seedream-v5-lite-edit" 
     ? "fal-ai/bytedance" 
     : model === "wan-25"
     ? "fal-ai/wan-25-preview"
@@ -167,7 +169,7 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
     payload.enable_web_search = true;
   } else {
     payload.image_urls = images;
-    if (model === "seedream") {
+    if (model === "seedream" || model === "seedream-v5-lite-edit") {
       payload.enable_safety_checker = false;
     }
   }

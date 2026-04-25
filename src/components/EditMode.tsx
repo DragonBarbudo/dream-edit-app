@@ -100,6 +100,7 @@ export const EditMode = () => {
               <SelectItem value="nano-banana">Nano Banana</SelectItem>
               <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
               <SelectItem value="seedream">Seedream v4.5</SelectItem>
+              <SelectItem value="seedream-v5-lite-edit">Seedream v5 Lite Edit</SelectItem>
               <SelectItem value="z-image">Z-Image Turbo</SelectItem>
             </SelectContent>
           </Select>
