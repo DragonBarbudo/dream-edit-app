@@ -51,7 +51,13 @@ const getModelUrl = (model: ModelType, isEdit: boolean): string => {
   }
 };
 
-const submitRequest = async (url: string, payload: any): Promise<string> => {
+interface FalQueueSubmission {
+  request_id: string;
+  status_url?: string;
+  response_url?: string;
+}
+
+const submitRequest = async (url: string, payload: any): Promise<FalQueueSubmission> => {
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -61,12 +67,13 @@ const submitRequest = async (url: string, payload: any): Promise<string> => {
     body: JSON.stringify(payload),
   });
 
+  const data = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.statusText}`);
+    throw new Error(data.detail?.[0]?.msg || data.detail || data.message || `API request failed: ${response.statusText}`);
   }
 
-  const data = await response.json();
-  return data.request_id;
+  return data;
 };
 
 const getStatusUrl = (model: ModelType, requestId: string): string => {
@@ -103,8 +110,8 @@ const getResultUrl = (model: ModelType, requestId: string): string => {
   return `https://queue.fal.run/${basePath}/requests/${requestId}`;
 };
 
-const pollResult = async (model: ModelType, requestId: string): Promise<string> => {
-  const statusUrl = getStatusUrl(model, requestId);
+const pollResult = async (model: ModelType, requestId: string, queueStatusUrl?: string): Promise<string> => {
+  const statusUrl = queueStatusUrl || getStatusUrl(model, requestId);
   
   while (true) {
     const response = await fetch(statusUrl, {
@@ -157,8 +164,8 @@ export const generateImage = async ({ prompt, model }: GenerateImageParams): Pro
     payload.enable_web_search = true;
   }
   
-  const requestId = await submitRequest(url, payload);
-  const resultUrl = await pollResult(model, requestId);
+  const request = await submitRequest(url, payload);
+  const resultUrl = await pollResult(model, request.request_id, request.status_url);
   return await fetchResult(resultUrl);
 };
 
@@ -186,8 +193,8 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
     }
   }
   
-  const requestId = await submitRequest(url, payload);
-  const resultUrl = await pollResult(model, requestId);
+  const request = await submitRequest(url, payload);
+  const resultUrl = await pollResult(model, request.request_id, request.status_url);
   return await fetchResult(resultUrl);
 };
 
@@ -233,7 +240,8 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
     payload.aspect_ratio = aspectRatio;
   }
   
-  const requestId = await submitRequest(url, payload);
+  const request = await submitRequest(url, payload);
+  const requestId = request.request_id;
   
   if (videoModel === "seedance") {
     const statusUrl = `https://queue.fal.run/fal-ai/bytedance/requests/${requestId}/status`;
@@ -266,8 +274,8 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
   }
 
   if (videoModel === "wan-27") {
-    const statusUrl = `https://queue.fal.run/fal-ai/wan/v2.7/requests/${requestId}/status`;
-    const resultUrlBase = `https://queue.fal.run/fal-ai/wan/v2.7/requests/${requestId}`;
+    const statusUrl = request.status_url || `https://queue.fal.run/fal-ai/wan/v2.7/requests/${requestId}/status`;
+    const resultUrlBase = request.response_url || `https://queue.fal.run/fal-ai/wan/v2.7/requests/${requestId}`;
     while (true) {
       const response = await fetch(statusUrl, {
         headers: { "Authorization": `Key ${FAL_API_KEY}` },
@@ -275,7 +283,7 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
       if (!response.ok) throw new Error(`Status check failed: ${response.statusText}`);
       const status = await response.json();
       if (status.status === "COMPLETED") return await fetchResult(resultUrlBase, true);
-      else if (status.status === "FAILED") throw new Error("Generation failed");
+      else if (status.status === "FAILED") throw new Error(status.error?.message || status.error || "Generation failed");
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
