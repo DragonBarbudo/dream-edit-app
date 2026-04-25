@@ -170,6 +170,12 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
     // z-image only accepts a single image via image_url
     payload.image_url = images[0];
     payload.enable_safety_checker = false;
+  } else if (model === "gpt-image-2-edit") {
+    payload.image_urls = images;
+    payload.image_size = "auto";
+    payload.quality = "high";
+    payload.num_images = 1;
+    payload.output_format = "png";
   } else if (model === "nano-banana-pro") {
     payload.image_urls = images;
     payload.enable_web_search = true;
