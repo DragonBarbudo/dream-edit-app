@@ -13,7 +13,7 @@ export interface EditImageParams {
   model: ModelType;
 }
 
-export type VideoModelType = "wan-25" | "wan-26" | "seedance";
+export type VideoModelType = "wan-25" | "wan-26" | "wan-27" | "seedance";
 
 export interface GenerateVideoParams {
   prompt: string;
@@ -182,6 +182,8 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
 export const generateVideo = async ({ prompt, image, duration, videoModel, aspectRatio }: GenerateVideoParams): Promise<string> => {
   const url = videoModel === "seedance"
     ? "https://queue.fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video"
+    : videoModel === "wan-27"
+    ? "https://queue.fal.run/fal-ai/wan/v2.7/image-to-video"
     : videoModel === "wan-26"
     ? "https://queue.fal.run/wan/v2.6/reference-to-video/flash"
     : "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
@@ -196,6 +198,14 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
       resolution: "720p",
       duration,
       ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
+    };
+  } else if (videoModel === "wan-27") {
+    payload = {
+      prompt,
+      image_url: image,
+      enable_safety_checker: false,
+      resolution: "1080p",
+      duration,
     };
   } else {
     payload = {
@@ -231,6 +241,21 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
   if (videoModel === "wan-26") {
     const statusUrl = `https://queue.fal.run/wan/v2.6/requests/${requestId}/status`;
     const resultUrlBase = `https://queue.fal.run/wan/v2.6/requests/${requestId}`;
+    while (true) {
+      const response = await fetch(statusUrl, {
+        headers: { "Authorization": `Key ${FAL_API_KEY}` },
+      });
+      if (!response.ok) throw new Error(`Status check failed: ${response.statusText}`);
+      const status = await response.json();
+      if (status.status === "COMPLETED") return await fetchResult(resultUrlBase, true);
+      else if (status.status === "FAILED") throw new Error("Generation failed");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
+  if (videoModel === "wan-27") {
+    const statusUrl = `https://queue.fal.run/fal-ai/wan/v2.7/requests/${requestId}/status`;
+    const resultUrlBase = `https://queue.fal.run/fal-ai/wan/v2.7/requests/${requestId}`;
     while (true) {
       const response = await fetch(statusUrl, {
         headers: { "Authorization": `Key ${FAL_API_KEY}` },
