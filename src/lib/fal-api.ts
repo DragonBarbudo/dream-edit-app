@@ -51,7 +51,13 @@ const getModelUrl = (model: ModelType, isEdit: boolean): string => {
   }
 };
 
-const submitRequest = async (url: string, payload: any): Promise<string> => {
+interface FalQueueSubmission {
+  request_id: string;
+  status_url?: string;
+  response_url?: string;
+}
+
+const submitRequest = async (url: string, payload: any): Promise<FalQueueSubmission> => {
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -61,12 +67,13 @@ const submitRequest = async (url: string, payload: any): Promise<string> => {
     body: JSON.stringify(payload),
   });
 
+  const data = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.statusText}`);
+    throw new Error(data.detail?.[0]?.msg || data.detail || data.message || `API request failed: ${response.statusText}`);
   }
 
-  const data = await response.json();
-  return data.request_id;
+  return data;
 };
 
 const getStatusUrl = (model: ModelType, requestId: string): string => {
@@ -103,8 +110,8 @@ const getResultUrl = (model: ModelType, requestId: string): string => {
   return `https://queue.fal.run/${basePath}/requests/${requestId}`;
 };
 
-const pollResult = async (model: ModelType, requestId: string): Promise<string> => {
-  const statusUrl = getStatusUrl(model, requestId);
+const pollResult = async (model: ModelType, requestId: string, queueStatusUrl?: string): Promise<string> => {
+  const statusUrl = queueStatusUrl || getStatusUrl(model, requestId);
   
   while (true) {
     const response = await fetch(statusUrl, {
