@@ -160,9 +160,8 @@ export const generateImage = async ({ prompt, model, images = [] }: GenerateImag
   
   if (model === "z-image") {
     payload.enable_safety_checker = false;
-  } else if (model === "gpt-image-2-edit") {
-    payload.image_urls = images;
-    payload.image_size = "auto";
+  } else if (model === "gpt-image-2") {
+    payload.image_size = "landscape_4_3";
     payload.quality = "high";
     payload.num_images = 1;
     payload.output_format = "png";
