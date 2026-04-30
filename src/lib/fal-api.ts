@@ -5,6 +5,7 @@ export type ModelType = "seedream" | "seedream-v5-lite-edit" | "gpt-image-2-edit
 export interface GenerateImageParams {
   prompt: string;
   model: ModelType;
+  images?: string[];
 }
 
 export interface EditImageParams {
@@ -151,12 +152,18 @@ const fetchResult = async (resultUrl: string, isVideo: boolean = false): Promise
   return isVideo ? result.video?.url : (result.images?.[0]?.url || result.image?.url);
 };
 
-export const generateImage = async ({ prompt, model }: GenerateImageParams): Promise<string> => {
+export const generateImage = async ({ prompt, model, images = [] }: GenerateImageParams): Promise<string> => {
   const url = getModelUrl(model, false);
   const payload: any = { prompt };
   
   if (model === "z-image") {
     payload.enable_safety_checker = false;
+  } else if (model === "gpt-image-2-edit") {
+    payload.image_urls = images;
+    payload.image_size = "auto";
+    payload.quality = "high";
+    payload.num_images = 1;
+    payload.output_format = "png";
   } else if (model === "nano-banana-pro") {
     payload.enable_web_search = true;
   } else if (model === "nano-banana-2") {
@@ -185,6 +192,10 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
     payload.output_format = "png";
   } else if (model === "nano-banana-pro") {
     payload.image_urls = images;
+    payload.enable_web_search = true;
+  } else if (model === "nano-banana-2") {
+    payload.image_urls = images;
+    payload.safety_tolerance = "6";
     payload.enable_web_search = true;
   } else {
     payload.image_urls = images;
