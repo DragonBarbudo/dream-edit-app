@@ -1,6 +1,6 @@
 const FAL_API_KEY = "13fe9b5c-2e15-4e69-9cf0-d07ebff933ac:b4a976faa9a01bb5d0ce0b5602c93535";
 
-export type ModelType = "seedream" | "seedream-v5-lite-edit" | "gpt-image-2-edit" | "nano-banana" | "nano-banana-pro" | "nano-banana-2" | "wan-25" | "z-image";
+export type ModelType = "seedream" | "seedream-v5-lite-edit" | "gpt-image-2" | "gpt-image-2-edit" | "nano-banana" | "nano-banana-pro" | "nano-banana-2" | "wan-25" | "z-image";
 
 export interface GenerateImageParams {
   prompt: string;
@@ -33,6 +33,8 @@ const getModelUrl = (model: ModelType, isEdit: boolean): string => {
     return "https://queue.fal.run/fal-ai/bytedance/seedream/v5/lite/edit";
   } else if (model === "gpt-image-2-edit") {
     return "https://queue.fal.run/openai/gpt-image-2/edit";
+  } else if (model === "gpt-image-2") {
+    return "https://queue.fal.run/openai/gpt-image-2";
   } else if (model === "wan-25") {
     return "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
   } else if (model === "z-image") {
@@ -84,7 +86,7 @@ const getStatusUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/wan-25-preview"
     : model === "z-image"
     ? "fal-ai/z-image"
-    : model === "gpt-image-2-edit"
+    : model === "gpt-image-2" || model === "gpt-image-2-edit"
     ? "openai/gpt-image-2"
     : model === "nano-banana-pro"
     ? "fal-ai/nano-banana-pro"
@@ -101,7 +103,7 @@ const getResultUrl = (model: ModelType, requestId: string): string => {
     ? "fal-ai/wan-25-preview"
     : model === "z-image"
     ? "fal-ai/z-image"
-    : model === "gpt-image-2-edit"
+    : model === "gpt-image-2" || model === "gpt-image-2-edit"
     ? "openai/gpt-image-2"
     : model === "nano-banana-pro"
     ? "fal-ai/nano-banana-pro"
@@ -158,9 +160,8 @@ export const generateImage = async ({ prompt, model, images = [] }: GenerateImag
   
   if (model === "z-image") {
     payload.enable_safety_checker = false;
-  } else if (model === "gpt-image-2-edit") {
-    payload.image_urls = images;
-    payload.image_size = "auto";
+  } else if (model === "gpt-image-2") {
+    payload.image_size = "landscape_4_3";
     payload.quality = "high";
     payload.num_images = 1;
     payload.output_format = "png";
