@@ -58,42 +58,15 @@ export const CreateMode = () => {
               <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
               <SelectItem value="seedream">Seedream v4.5</SelectItem>
               <SelectItem value="nano-banana-2">Nano Banana 2</SelectItem>
-              <SelectItem value="gpt-image-2-edit">GPT Image 2 Edit</SelectItem>
+              <SelectItem value="gpt-image-2">GPT Image 2</SelectItem>
               <SelectItem value="z-image">Z-Image Turbo</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {model === 'gpt-image-2-edit' && (
-          <div className="space-y-2">
-            <Label className="font-mono uppercase text-xs tracking-wider text-muted-foreground">Reference Images</Label>
-            {uploadedImages.length > 0 ? (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  {uploadedImages.map((image, index) => (
-                    <div key={index} className="relative border border-border">
-                      <img src={image} alt={`Reference ${index + 1}`} className="w-full h-32 object-cover" />
-                      <Button size="icon" variant="destructive" className="absolute top-2 right-2 rounded-none" onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== index))}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" className="w-full rounded-none font-mono uppercase text-xs" onClick={() => setUploadedImages([])}>Clear All</Button>
-              </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border hover:border-muted-foreground cursor-pointer transition-colors">
-                <Upload className="h-7 w-7 mb-2 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground font-mono">Upload reference images</span>
-                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
-              </label>
-            )}
-          </div>
-        )}
-
         <Button
           onClick={handleGenerate}
-          disabled={loading || !prompt.trim() || (model === 'gpt-image-2-edit' && uploadedImages.length === 0)}
+          disabled={loading || !prompt.trim()}
           className="w-full rounded-none font-mono uppercase tracking-wider h-12"
           size="lg"
         >
