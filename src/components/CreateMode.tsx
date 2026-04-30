@@ -5,14 +5,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { generateImage, type ModelType } from '@/lib/fal-api';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Zap, Copy, Upload, X } from 'lucide-react';
+import { Loader2, Zap, Copy } from 'lucide-react';
 
 export const CreateMode = () => {
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState<ModelType>('nano-banana');
   const [loading, setLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const { toast } = useToast();
 
   const handleGenerate = async () => {
@@ -20,14 +19,10 @@ export const CreateMode = () => {
       toast({ title: "Prompt required", description: "Please enter a description for your image", variant: "destructive" });
       return;
     }
-    if (model === 'gpt-image-2-edit' && uploadedImages.length === 0) {
-      toast({ title: "Image required", description: "Please upload at least one reference image", variant: "destructive" });
-      return;
-    }
     setLoading(true);
     setGeneratedImage(null);
     try {
-      const imageUrl = await generateImage({ prompt, model, images: uploadedImages });
+      const imageUrl = await generateImage({ prompt, model });
       setGeneratedImage(imageUrl);
       toast({ title: "Image generated!", description: "Your image has been created successfully" });
     } catch (error) {
@@ -35,19 +30,6 @@ export const CreateMode = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    const readers = Array.from(files).filter(file => file.type.startsWith('image/')).map(file =>
-      new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      })
-    );
-    Promise.all(readers).then(setUploadedImages);
   };
 
   return (
