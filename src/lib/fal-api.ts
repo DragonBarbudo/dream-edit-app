@@ -79,42 +79,20 @@ const submitRequest = async (url: string, payload: any): Promise<FalQueueSubmiss
   return data;
 };
 
-const getStatusUrl = (model: ModelType, requestId: string): string => {
-  const basePath = model === "seedream" || model === "seedream-v5-lite-edit" 
-    ? "fal-ai/bytedance" 
-    : model === "wan-25"
-    ? "fal-ai/wan-25-preview"
-    : model === "z-image"
-    ? "fal-ai/z-image"
-    : model === "gpt-image-2" || model === "gpt-image-2-edit"
-    ? "openai/gpt-image-2"
-    : model === "nano-banana-pro"
-    ? "fal-ai/nano-banana-pro"
-    : model === "nano-banana-2"
-    ? "fal-ai/nano-banana-2"
-    : "fal-ai/nano-banana";
-  return `https://queue.fal.run/${basePath}/requests/${requestId}/status`;
+const getBasePath = (model: ModelType, isEdit: boolean): string => {
+  return getModelUrl(model, isEdit).replace("https://queue.fal.run/", "");
 };
 
-const getResultUrl = (model: ModelType, requestId: string): string => {
-  const basePath = model === "seedream" || model === "seedream-v5-lite-edit" 
-    ? "fal-ai/bytedance" 
-    : model === "wan-25"
-    ? "fal-ai/wan-25-preview"
-    : model === "z-image"
-    ? "fal-ai/z-image"
-    : model === "gpt-image-2" || model === "gpt-image-2-edit"
-    ? "openai/gpt-image-2"
-    : model === "nano-banana-pro"
-    ? "fal-ai/nano-banana-pro"
-    : model === "nano-banana-2"
-    ? "fal-ai/nano-banana-2"
-    : "fal-ai/nano-banana";
-  return `https://queue.fal.run/${basePath}/requests/${requestId}`;
+const getStatusUrl = (model: ModelType, requestId: string, isEdit: boolean): string => {
+  return `https://queue.fal.run/${getBasePath(model, isEdit)}/requests/${requestId}/status`;
 };
 
-const pollResult = async (model: ModelType, requestId: string, queueStatusUrl?: string): Promise<string> => {
-  const statusUrl = queueStatusUrl || getStatusUrl(model, requestId);
+const getResultUrl = (model: ModelType, requestId: string, isEdit: boolean): string => {
+  return `https://queue.fal.run/${getBasePath(model, isEdit)}/requests/${requestId}`;
+};
+
+const pollResult = async (model: ModelType, requestId: string, isEdit: boolean, queueStatusUrl?: string, queueResponseUrl?: string): Promise<string> => {
+  const statusUrl = queueStatusUrl || getStatusUrl(model, requestId, isEdit);
   
   while (true) {
     const response = await fetch(statusUrl, {
@@ -130,9 +108,9 @@ const pollResult = async (model: ModelType, requestId: string, queueStatusUrl?: 
     const status = await response.json();
 
     if (status.status === "COMPLETED") {
-      return getResultUrl(model, requestId);
+      return queueResponseUrl || getResultUrl(model, requestId, isEdit);
     } else if (status.status === "FAILED") {
-      throw new Error("Generation failed");
+      throw new Error(status.error?.message || status.error || "Generation failed");
     }
 
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -170,10 +148,12 @@ export const generateImage = async ({ prompt, model, images = [] }: GenerateImag
   } else if (model === "nano-banana-2") {
     payload.safety_tolerance = "6";
     payload.enable_web_search = true;
+  } else if (model === "seedream" || model === "seedream-v5-lite-edit") {
+    payload.enable_safety_checker = false;
   }
   
   const request = await submitRequest(url, payload);
-  const resultUrl = await pollResult(model, request.request_id, request.status_url);
+  const resultUrl = await pollResult(model, request.request_id, false, request.status_url, request.response_url);
   return await fetchResult(resultUrl);
 };
 
@@ -198,15 +178,15 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
     payload.image_urls = images;
     payload.safety_tolerance = "6";
     payload.enable_web_search = true;
+  } else if (model === "seedream" || model === "seedream-v5-lite-edit") {
+    payload.image_urls = images;
+    payload.enable_safety_checker = false;
   } else {
     payload.image_urls = images;
-    if (model === "seedream" || model === "seedream-v5-lite-edit") {
-      payload.enable_safety_checker = false;
-    }
   }
   
   const request = await submitRequest(url, payload);
-  const resultUrl = await pollResult(model, request.request_id, request.status_url);
+  const resultUrl = await pollResult(model, request.request_id, true, request.status_url, request.response_url);
   return await fetchResult(resultUrl);
 };
 
@@ -300,6 +280,6 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
     }
   }
 
-  const resultUrl = await pollResult("wan-25", requestId);
+  const resultUrl = await pollResult("wan-25", requestId, false);
   return await fetchResult(resultUrl, true);
 };
