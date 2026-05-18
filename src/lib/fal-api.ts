@@ -91,8 +91,8 @@ const getResultUrl = (model: ModelType, requestId: string, isEdit: boolean): str
   return `https://queue.fal.run/${getBasePath(model, isEdit)}/requests/${requestId}`;
 };
 
-const pollResult = async (model: ModelType, requestId: string, queueStatusUrl?: string): Promise<string> => {
-  const statusUrl = queueStatusUrl || getStatusUrl(model, requestId);
+const pollResult = async (model: ModelType, requestId: string, isEdit: boolean, queueStatusUrl?: string, queueResponseUrl?: string): Promise<string> => {
+  const statusUrl = queueStatusUrl || getStatusUrl(model, requestId, isEdit);
   
   while (true) {
     const response = await fetch(statusUrl, {
@@ -108,9 +108,9 @@ const pollResult = async (model: ModelType, requestId: string, queueStatusUrl?: 
     const status = await response.json();
 
     if (status.status === "COMPLETED") {
-      return getResultUrl(model, requestId);
+      return queueResponseUrl || getResultUrl(model, requestId, isEdit);
     } else if (status.status === "FAILED") {
-      throw new Error("Generation failed");
+      throw new Error(status.error?.message || status.error || "Generation failed");
     }
 
     await new Promise(resolve => setTimeout(resolve, 2000));
