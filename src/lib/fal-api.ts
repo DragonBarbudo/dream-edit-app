@@ -148,10 +148,12 @@ export const generateImage = async ({ prompt, model, images = [] }: GenerateImag
   } else if (model === "nano-banana-2") {
     payload.safety_tolerance = "6";
     payload.enable_web_search = true;
+  } else if (model === "seedream" || model === "seedream-v5-lite-edit") {
+    payload.enable_safety_checker = false;
   }
   
   const request = await submitRequest(url, payload);
-  const resultUrl = await pollResult(model, request.request_id, request.status_url);
+  const resultUrl = await pollResult(model, request.request_id, false, request.status_url, request.response_url);
   return await fetchResult(resultUrl);
 };
 
@@ -176,15 +178,15 @@ export const editImage = async ({ prompt, images, model }: EditImageParams): Pro
     payload.image_urls = images;
     payload.safety_tolerance = "6";
     payload.enable_web_search = true;
+  } else if (model === "seedream" || model === "seedream-v5-lite-edit") {
+    payload.image_urls = images;
+    payload.enable_safety_checker = false;
   } else {
     payload.image_urls = images;
-    if (model === "seedream" || model === "seedream-v5-lite-edit") {
-      payload.enable_safety_checker = false;
-    }
   }
   
   const request = await submitRequest(url, payload);
-  const resultUrl = await pollResult(model, request.request_id, request.status_url);
+  const resultUrl = await pollResult(model, request.request_id, true, request.status_url, request.response_url);
   return await fetchResult(resultUrl);
 };
 
@@ -278,6 +280,6 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
     }
   }
 
-  const resultUrl = await pollResult("wan-25", requestId);
+  const resultUrl = await pollResult("wan-25", requestId, false);
   return await fetchResult(resultUrl, true);
 };
