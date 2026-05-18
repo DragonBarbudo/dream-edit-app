@@ -79,38 +79,16 @@ const submitRequest = async (url: string, payload: any): Promise<FalQueueSubmiss
   return data;
 };
 
-const getStatusUrl = (model: ModelType, requestId: string): string => {
-  const basePath = model === "seedream" || model === "seedream-v5-lite-edit" 
-    ? "fal-ai/bytedance" 
-    : model === "wan-25"
-    ? "fal-ai/wan-25-preview"
-    : model === "z-image"
-    ? "fal-ai/z-image"
-    : model === "gpt-image-2" || model === "gpt-image-2-edit"
-    ? "openai/gpt-image-2"
-    : model === "nano-banana-pro"
-    ? "fal-ai/nano-banana-pro"
-    : model === "nano-banana-2"
-    ? "fal-ai/nano-banana-2"
-    : "fal-ai/nano-banana";
-  return `https://queue.fal.run/${basePath}/requests/${requestId}/status`;
+const getBasePath = (model: ModelType, isEdit: boolean): string => {
+  return getModelUrl(model, isEdit).replace("https://queue.fal.run/", "");
 };
 
-const getResultUrl = (model: ModelType, requestId: string): string => {
-  const basePath = model === "seedream" || model === "seedream-v5-lite-edit" 
-    ? "fal-ai/bytedance" 
-    : model === "wan-25"
-    ? "fal-ai/wan-25-preview"
-    : model === "z-image"
-    ? "fal-ai/z-image"
-    : model === "gpt-image-2" || model === "gpt-image-2-edit"
-    ? "openai/gpt-image-2"
-    : model === "nano-banana-pro"
-    ? "fal-ai/nano-banana-pro"
-    : model === "nano-banana-2"
-    ? "fal-ai/nano-banana-2"
-    : "fal-ai/nano-banana";
-  return `https://queue.fal.run/${basePath}/requests/${requestId}`;
+const getStatusUrl = (model: ModelType, requestId: string, isEdit: boolean): string => {
+  return `https://queue.fal.run/${getBasePath(model, isEdit)}/requests/${requestId}/status`;
+};
+
+const getResultUrl = (model: ModelType, requestId: string, isEdit: boolean): string => {
+  return `https://queue.fal.run/${getBasePath(model, isEdit)}/requests/${requestId}`;
 };
 
 const pollResult = async (model: ModelType, requestId: string, queueStatusUrl?: string): Promise<string> => {
