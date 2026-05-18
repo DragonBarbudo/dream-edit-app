@@ -14,6 +14,7 @@ export const EditMode = () => {
   const [loading, setLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [errorResponse, setErrorResponse] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
@@ -46,13 +47,15 @@ export const EditMode = () => {
   const handleEdit = async () => {
     if (!prompt.trim()) { toast({ title: "Prompt required", description: "Please describe how to edit the image", variant: "destructive" }); return; }
     if (uploadedImages.length === 0) { toast({ title: "Image required", description: "Please upload at least one image to edit", variant: "destructive" }); return; }
-    setLoading(true); setGeneratedImage(null);
+    setLoading(true); setGeneratedImage(null); setErrorResponse(null);
     try {
       const imageUrl = await editImage({ prompt, images: uploadedImages, model });
       setGeneratedImage(imageUrl);
       toast({ title: "Image edited!", description: "Your edited image is ready" });
     } catch (error) {
-      toast({ title: "Edit failed", description: error instanceof Error ? error.message : "Failed to edit image", variant: "destructive" });
+      const msg = error instanceof Error ? error.message : "Failed to edit image";
+      setErrorResponse(msg);
+      toast({ title: "Edit failed", description: msg, variant: "destructive" });
     } finally { setLoading(false); }
   };
 
@@ -123,6 +126,12 @@ export const EditMode = () => {
               <Copy className="mr-2 h-4 w-4" />Copy URL
             </Button>
           </div>
+        </div>
+      )}
+
+      {errorResponse && (
+        <div className="border border-destructive bg-destructive/10 p-4 overflow-auto">
+          <p className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">{errorResponse}</p>
         </div>
       )}
     </div>

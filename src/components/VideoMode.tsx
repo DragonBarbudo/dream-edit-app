@@ -15,6 +15,7 @@ export const VideoMode = () => {
   const [loading, setLoading] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
+  const [errorResponse, setErrorResponse] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
@@ -33,13 +34,15 @@ export const VideoMode = () => {
   const handleGenerate = async () => {
     if (!prompt.trim()) { toast({ title: "Prompt required", description: "Please describe the video animation", variant: "destructive" }); return; }
     if (!uploadedImage) { toast({ title: "Image required", description: "Please upload an image to animate", variant: "destructive" }); return; }
-    setLoading(true); setGeneratedVideo(null);
+    setLoading(true); setGeneratedVideo(null); setErrorResponse(null);
     try {
       const videoUrl = await generateVideo({ prompt, image: uploadedImage, duration, videoModel, aspectRatio: (videoModel === "seedance" || videoModel === "wan-26") ? aspectRatio : undefined });
       setGeneratedVideo(videoUrl);
       toast({ title: "Video generated!", description: "Your animated video is ready" });
     } catch (error) {
-      toast({ title: "Generation failed", description: error instanceof Error ? error.message : "Failed to generate video", variant: "destructive" });
+      const msg = error instanceof Error ? error.message : "Failed to generate video";
+      setErrorResponse(msg);
+      toast({ title: "Generation failed", description: msg, variant: "destructive" });
     } finally { setLoading(false); }
   };
 
@@ -128,6 +131,12 @@ export const VideoMode = () => {
               <Copy className="mr-2 h-4 w-4" />Copy URL
             </Button>
           </div>
+        </div>
+      )}
+
+      {errorResponse && (
+        <div className="border border-destructive bg-destructive/10 p-4 overflow-auto">
+          <p className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">{errorResponse}</p>
         </div>
       )}
     </div>
