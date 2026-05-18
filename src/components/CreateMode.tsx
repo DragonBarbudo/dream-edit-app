@@ -12,6 +12,7 @@ export const CreateMode = () => {
   const [model, setModel] = useState<ModelType>('nano-banana');
   const [loading, setLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [errorResponse, setErrorResponse] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleGenerate = async () => {
@@ -21,12 +22,15 @@ export const CreateMode = () => {
     }
     setLoading(true);
     setGeneratedImage(null);
+    setErrorResponse(null);
     try {
       const imageUrl = await generateImage({ prompt, model });
       setGeneratedImage(imageUrl);
       toast({ title: "Image generated!", description: "Your image has been created successfully" });
     } catch (error) {
-      toast({ title: "Generation failed", description: error instanceof Error ? error.message : "Failed to generate image", variant: "destructive" });
+      const msg = error instanceof Error ? error.message : "Failed to generate image";
+      setErrorResponse(msg);
+      toast({ title: "Generation failed", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -93,6 +97,12 @@ export const CreateMode = () => {
               <Copy className="mr-2 h-4 w-4" />Copy URL
             </Button>
           </div>
+        </div>
+      )}
+
+      {errorResponse && (
+        <div className="border border-destructive bg-destructive/10 p-4 overflow-auto">
+          <p className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">{errorResponse}</p>
         </div>
       )}
     </div>
