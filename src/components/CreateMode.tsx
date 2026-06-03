@@ -97,6 +97,10 @@ export const CreateMode = () => {
               <Copy className="mr-2 h-4 w-4" />Copy URL
             </Button>
           </div>
+          <div className="p-4 border-t border-border space-y-2">
+            <p className="font-mono uppercase text-xs tracking-wider text-muted-foreground">Raw Image (right-click or drag)</p>
+            <img src={generatedImage} alt="Generated raw" style={{ maxWidth: '100%' }} />
+          </div>
         </div>
       )}
 
