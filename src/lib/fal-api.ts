@@ -84,6 +84,39 @@ const submitRequest = async (url: string, payload: any): Promise<FalQueueSubmiss
 const getBasePath = (model: ModelType, isEdit: boolean): string => {
   return getModelUrl(model, isEdit).replace("https://queue.fal.run/", "");
 };
+const dataUrlToBlob = (dataUrl: string): { blob: Blob; contentType: string; ext: string } => {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+  if (!match) throw new Error("Invalid data URL");
+  const contentType = match[1];
+  const binary = atob(match[2]);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const extMap: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif" };
+  const ext = extMap[contentType] || "png";
+  return { blob: new Blob([bytes], { type: contentType }), contentType, ext };
+};
+
+const uploadToFalStorage = async (dataUrl: string): Promise<string> => {
+  // already a URL
+  if (!dataUrl.startsWith("data:")) return dataUrl;
+  const { blob, contentType, ext } = dataUrlToBlob(dataUrl);
+  const file_name = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const initRes = await fetch("https://rest.alpha.fal.ai/storage/upload/initiate", {
+    method: "POST",
+    headers: { "Authorization": `Key ${FAL_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ file_name, content_type: contentType }),
+  });
+  if (!initRes.ok) throw new Error(`Storage initiate failed: ${initRes.statusText} ${await initRes.text().catch(() => "")}`);
+  const { upload_url, file_url } = await initRes.json();
+  const putRes = await fetch(upload_url, { method: "PUT", headers: { "Content-Type": contentType }, body: blob });
+  if (!putRes.ok) throw new Error(`Storage upload failed: ${putRes.statusText}`);
+  return file_url;
+};
+
+const uploadImages = async (images: string[]): Promise<string[]> => {
+  return Promise.all(images.map(uploadToFalStorage));
+};
+
 
 const getStatusUrl = (model: ModelType, requestId: string, isEdit: boolean): string => {
   return `https://queue.fal.run/${getBasePath(model, isEdit)}/requests/${requestId}/status`;
@@ -162,30 +195,30 @@ export const generateImage = async ({ prompt, model, images = [] }: GenerateImag
 export const editImage = async ({ prompt, images, model }: EditImageParams): Promise<string> => {
   const url = getModelUrl(model, true);
   const payload: any = { prompt };
-  
+
+  const uploadedImages = await uploadImages(images);
+
   if (model === "z-image") {
     // z-image only accepts a single image via image_url
-    payload.image_url = images[0];
+    payload.image_url = uploadedImages[0];
     payload.enable_safety_checker = false;
   } else if (model === "gpt-image-2-edit") {
-    payload.image_urls = images;
+    payload.image_urls = uploadedImages;
     payload.image_size = "auto";
     payload.quality = "high";
     payload.num_images = 1;
     payload.output_format = "png";
-  } else if (model === "nano-banana-pro") {
-    payload.image_urls = images;
-    payload.enable_web_search = true;
   } else if (model === "nano-banana-2") {
-    payload.image_urls = images;
+    payload.image_urls = uploadedImages;
     payload.safety_tolerance = "6";
     payload.enable_web_search = true;
   } else if (model === "seedream" || model === "seedream-v5-lite-edit") {
-    payload.image_urls = images;
+    payload.image_urls = uploadedImages;
     payload.enable_safety_checker = false;
   } else {
-    payload.image_urls = images;
+    payload.image_urls = uploadedImages;
   }
+
   
   const request = await submitRequest(url, payload);
   const resultUrl = await pollResult(model, request.request_id, true, request.status_url, request.response_url);
@@ -200,6 +233,8 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
     : videoModel === "wan-26"
     ? "https://queue.fal.run/wan/v2.6/reference-to-video/flash"
     : "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
+
+  image = await uploadToFalStorage(image);
 
   let payload: any;
 
