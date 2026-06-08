@@ -46,7 +46,9 @@ const getModelUrl = (model: ModelType, isEdit: boolean): string => {
       ? "https://queue.fal.run/fal-ai/nano-banana-pro"
       : "https://queue.fal.run/fal-ai/nano-banana-pro";
   } else if (model === "nano-banana-2") {
-    return "https://queue.fal.run/fal-ai/nano-banana-2";
+    return isEdit
+      ? "https://queue.fal.run/fal-ai/nano-banana-2/edit"
+      : "https://queue.fal.run/fal-ai/nano-banana-2";
   } else {
     return isEdit
       ? "https://queue.fal.run/fal-ai/nano-banana/edit"

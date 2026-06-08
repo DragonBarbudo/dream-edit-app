@@ -9,7 +9,7 @@ import { Loader2, Zap, Copy } from 'lucide-react';
 
 export const CreateMode = () => {
   const [prompt, setPrompt] = useState('');
-  const [model, setModel] = useState<ModelType>('nano-banana');
+  const [model, setModel] = useState<ModelType>('nano-banana-2');
   const [loading, setLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [errorResponse, setErrorResponse] = useState<string | null>(null);
@@ -58,8 +58,6 @@ export const CreateMode = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-none bg-card border-border">
-              <SelectItem value="nano-banana">Nano Banana</SelectItem>
-              <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
               <SelectItem value="seedream">Seedream v4.5</SelectItem>
               <SelectItem value="nano-banana-2">Nano Banana 2</SelectItem>
               <SelectItem value="gpt-image-2">GPT Image 2</SelectItem>

@@ -10,7 +10,7 @@ import { ImageCompare } from './ImageCompare';
 
 export const EditMode = () => {
   const [prompt, setPrompt] = useState('');
-  const [model, setModel] = useState<ModelType>('nano-banana');
+  const [model, setModel] = useState<ModelType>('nano-banana-2');
   const [loading, setLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -100,8 +100,6 @@ export const EditMode = () => {
           <Select value={model} onValueChange={(value) => setModel(value as ModelType)}>
             <SelectTrigger id="edit-model" className="rounded-none bg-muted border-border font-mono text-sm"><SelectValue /></SelectTrigger>
             <SelectContent className="rounded-none bg-card border-border">
-              <SelectItem value="nano-banana">Nano Banana</SelectItem>
-              <SelectItem value="nano-banana-pro">Nano Banana Pro</SelectItem>
               <SelectItem value="nano-banana-2">Nano Banana 2</SelectItem>
               <SelectItem value="seedream">Seedream v4.5</SelectItem>
               <SelectItem value="seedream-v5-lite-edit">Seedream v5 Lite Edit</SelectItem>
