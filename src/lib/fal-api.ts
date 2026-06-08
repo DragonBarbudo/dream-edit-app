@@ -84,6 +84,39 @@ const submitRequest = async (url: string, payload: any): Promise<FalQueueSubmiss
 const getBasePath = (model: ModelType, isEdit: boolean): string => {
   return getModelUrl(model, isEdit).replace("https://queue.fal.run/", "");
 };
+const dataUrlToBlob = (dataUrl: string): { blob: Blob; contentType: string; ext: string } => {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+  if (!match) throw new Error("Invalid data URL");
+  const contentType = match[1];
+  const binary = atob(match[2]);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const extMap: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif" };
+  const ext = extMap[contentType] || "png";
+  return { blob: new Blob([bytes], { type: contentType }), contentType, ext };
+};
+
+const uploadToFalStorage = async (dataUrl: string): Promise<string> => {
+  // already a URL
+  if (!dataUrl.startsWith("data:")) return dataUrl;
+  const { blob, contentType, ext } = dataUrlToBlob(dataUrl);
+  const file_name = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const initRes = await fetch("https://rest.alpha.fal.ai/storage/upload/initiate", {
+    method: "POST",
+    headers: { "Authorization": `Key ${FAL_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ file_name, content_type: contentType }),
+  });
+  if (!initRes.ok) throw new Error(`Storage initiate failed: ${initRes.statusText} ${await initRes.text().catch(() => "")}`);
+  const { upload_url, file_url } = await initRes.json();
+  const putRes = await fetch(upload_url, { method: "PUT", headers: { "Content-Type": contentType }, body: blob });
+  if (!putRes.ok) throw new Error(`Storage upload failed: ${putRes.statusText}`);
+  return file_url;
+};
+
+const uploadImages = async (images: string[]): Promise<string[]> => {
+  return Promise.all(images.map(uploadToFalStorage));
+};
+
 
 const getStatusUrl = (model: ModelType, requestId: string, isEdit: boolean): string => {
   return `https://queue.fal.run/${getBasePath(model, isEdit)}/requests/${requestId}/status`;
