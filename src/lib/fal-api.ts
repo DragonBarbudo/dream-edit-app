@@ -195,30 +195,30 @@ export const generateImage = async ({ prompt, model, images = [] }: GenerateImag
 export const editImage = async ({ prompt, images, model }: EditImageParams): Promise<string> => {
   const url = getModelUrl(model, true);
   const payload: any = { prompt };
-  
+
+  const uploadedImages = await uploadImages(images);
+
   if (model === "z-image") {
     // z-image only accepts a single image via image_url
-    payload.image_url = images[0];
+    payload.image_url = uploadedImages[0];
     payload.enable_safety_checker = false;
   } else if (model === "gpt-image-2-edit") {
-    payload.image_urls = images;
+    payload.image_urls = uploadedImages;
     payload.image_size = "auto";
     payload.quality = "high";
     payload.num_images = 1;
     payload.output_format = "png";
-  } else if (model === "nano-banana-pro") {
-    payload.image_urls = images;
-    payload.enable_web_search = true;
   } else if (model === "nano-banana-2") {
-    payload.image_urls = images;
+    payload.image_urls = uploadedImages;
     payload.safety_tolerance = "6";
     payload.enable_web_search = true;
   } else if (model === "seedream" || model === "seedream-v5-lite-edit") {
-    payload.image_urls = images;
+    payload.image_urls = uploadedImages;
     payload.enable_safety_checker = false;
   } else {
-    payload.image_urls = images;
+    payload.image_urls = uploadedImages;
   }
+
   
   const request = await submitRequest(url, payload);
   const resultUrl = await pollResult(model, request.request_id, true, request.status_url, request.response_url);
