@@ -8,13 +8,21 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, X, Wand2, Copy } from 'lucide-react';
 import { ImageCompare } from './ImageCompare';
 
+interface Job {
+  id: string;
+  prompt: string;
+  model: ModelType;
+  inputImages: string[];
+  status: 'pending' | 'done' | 'error';
+  imageUrl?: string;
+  error?: string;
+}
+
 export const EditMode = () => {
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState<ModelType>('nano-banana-2');
-  const [loading, setLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [errorResponse, setErrorResponse] = useState<string | null>(null);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
@@ -47,17 +55,24 @@ export const EditMode = () => {
   const handleEdit = async () => {
     if (!prompt.trim()) { toast({ title: "Prompt required", description: "Please describe how to edit the image", variant: "destructive" }); return; }
     if (uploadedImages.length === 0) { toast({ title: "Image required", description: "Please upload at least one image to edit", variant: "destructive" }); return; }
-    setLoading(true); setGeneratedImage(null); setErrorResponse(null);
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const job: Job = { id, prompt, model, inputImages: uploadedImages, status: 'pending' };
+    setJobs(prev => [job, ...prev]);
+    const currentPrompt = prompt;
+    const currentModel = model;
+    const currentImages = uploadedImages;
     try {
-      const imageUrl = await editImage({ prompt, images: uploadedImages, model });
-      setGeneratedImage(imageUrl);
+      const imageUrl = await editImage({ prompt: currentPrompt, images: currentImages, model: currentModel });
+      setJobs(prev => prev.map(j => j.id === id ? { ...j, status: 'done', imageUrl } : j));
       toast({ title: "Image edited!", description: "Your edited image is ready" });
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Failed to edit image";
-      setErrorResponse(msg);
+      setJobs(prev => prev.map(j => j.id === id ? { ...j, status: 'error', error: msg } : j));
       toast({ title: "Edit failed", description: msg, variant: "destructive" });
-    } finally { setLoading(false); }
+    }
   };
+
+  const removeJob = (id: string) => setJobs(prev => prev.filter(j => j.id !== id));
 
   return (
     <div className="space-y-6">
@@ -109,33 +124,54 @@ export const EditMode = () => {
           </Select>
         </div>
 
-        <Button onClick={handleEdit} disabled={loading || !prompt.trim() || uploadedImages.length === 0} className="w-full rounded-none font-mono uppercase tracking-wider h-12" size="lg">
-          {loading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Editing...</>) : (<><Wand2 className="mr-2 h-4 w-4" />Edit Image</>)}
+        <Button onClick={handleEdit} disabled={!prompt.trim() || uploadedImages.length === 0} className="w-full rounded-none font-mono uppercase tracking-wider h-12" size="lg">
+          <Wand2 className="mr-2 h-4 w-4" />Edit Image
         </Button>
       </div>
 
-      {generatedImage && uploadedImages.length > 0 && (
-        <div className="border border-border bg-card overflow-hidden">
-          <div className="p-4">
-            <ImageCompare beforeImage={uploadedImages[0]} afterImage={generatedImage} beforeLabel="Original" afterLabel="Edited" />
-          </div>
-          <div className="p-4 border-t border-border">
-            <Button variant="outline" className="w-full rounded-none font-mono uppercase text-xs tracking-wider" onClick={() => { navigator.clipboard.writeText(generatedImage); toast({ title: "Copied!", description: "Image URL copied to clipboard" }); }}>
-              <Copy className="mr-2 h-4 w-4" />Copy URL
+      {jobs.map(job => (
+        <div key={job.id} className="border border-border bg-card overflow-hidden">
+          <div className="p-3 border-b border-border flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">{job.model} · {job.status}</p>
+              <p className="font-mono text-xs mt-1 truncate">{job.prompt}</p>
+            </div>
+            <Button size="icon" variant="ghost" className="rounded-none h-7 w-7" onClick={() => removeJob(job.id)}>
+              <X className="h-4 w-4" />
             </Button>
           </div>
-          <div className="p-4 border-t border-border space-y-2">
-            <p className="font-mono uppercase text-xs tracking-wider text-muted-foreground">Raw Image (right-click or drag)</p>
-            <img src={generatedImage} alt="Edited raw" style={{ maxWidth: '100%' }} />
-          </div>
-        </div>
-      )}
 
-      {errorResponse && (
-        <div className="border border-destructive bg-destructive/10 p-4 overflow-auto">
-          <p className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">{errorResponse}</p>
+          {job.status === 'pending' && (
+            <div className="flex items-center justify-center h-48 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span className="font-mono text-xs uppercase tracking-wider">Editing...</span>
+            </div>
+          )}
+
+          {job.status === 'done' && job.imageUrl && (
+            <>
+              <div className="p-4">
+                <ImageCompare beforeImage={job.inputImages[0]} afterImage={job.imageUrl} beforeLabel="Original" afterLabel="Edited" />
+              </div>
+              <div className="p-4 border-t border-border">
+                <Button variant="outline" className="w-full rounded-none font-mono uppercase text-xs tracking-wider" onClick={() => { navigator.clipboard.writeText(job.imageUrl!); toast({ title: "Copied!", description: "Image URL copied to clipboard" }); }}>
+                  <Copy className="mr-2 h-4 w-4" />Copy URL
+                </Button>
+              </div>
+              <div className="p-4 border-t border-border space-y-2">
+                <p className="font-mono uppercase text-xs tracking-wider text-muted-foreground">Raw Image (right-click or drag)</p>
+                <img src={job.imageUrl} alt="Edited raw" style={{ maxWidth: '100%' }} />
+              </div>
+            </>
+          )}
+
+          {job.status === 'error' && (
+            <div className="border-t border-destructive bg-destructive/10 p-4 overflow-auto">
+              <p className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">{job.error}</p>
+            </div>
+          )}
         </div>
-      )}
+      ))}
     </div>
   );
 };
