@@ -234,6 +234,8 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
     ? "https://queue.fal.run/wan/v2.6/reference-to-video/flash"
     : "https://queue.fal.run/fal-ai/wan-25-preview/image-to-video";
 
+  image = await uploadToFalStorage(image);
+
   let payload: any;
 
   if (videoModel === "wan-26") {
