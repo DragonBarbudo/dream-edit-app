@@ -9,7 +9,7 @@ import { Loader2, Zap, Copy } from 'lucide-react';
 
 export const CreateMode = () => {
   const [prompt, setPrompt] = useState('');
-  const [model, setModel] = useState<ModelType>('nano-banana');
+  const [model, setModel] = useState<ModelType>('nano-banana-2');
   const [loading, setLoading] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [errorResponse, setErrorResponse] = useState<string | null>(null);
