@@ -7,15 +7,22 @@ import { generateVideo, VideoModelType } from '@/lib/fal-api';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, X, Video, Copy } from 'lucide-react';
 
+interface Job {
+  id: string;
+  prompt: string;
+  videoModel: VideoModelType;
+  status: 'pending' | 'done' | 'error';
+  videoUrl?: string;
+  error?: string;
+}
+
 export const VideoMode = () => {
   const [prompt, setPrompt] = useState('');
   const [duration, setDuration] = useState<number>(5);
   const [videoModel, setVideoModel] = useState<VideoModelType>('wan-25');
   const [aspectRatio, setAspectRatio] = useState('16:9');
-  const [loading, setLoading] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
-  const [errorResponse, setErrorResponse] = useState<string | null>(null);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
@@ -34,17 +41,26 @@ export const VideoMode = () => {
   const handleGenerate = async () => {
     if (!prompt.trim()) { toast({ title: "Prompt required", description: "Please describe the video animation", variant: "destructive" }); return; }
     if (!uploadedImage) { toast({ title: "Image required", description: "Please upload an image to animate", variant: "destructive" }); return; }
-    setLoading(true); setGeneratedVideo(null); setErrorResponse(null);
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const job: Job = { id, prompt, videoModel, status: 'pending' };
+    setJobs(prev => [job, ...prev]);
+    const currentPrompt = prompt;
+    const currentImage = uploadedImage;
+    const currentDuration = duration;
+    const currentModel = videoModel;
+    const currentAspect = aspectRatio;
     try {
-      const videoUrl = await generateVideo({ prompt, image: uploadedImage, duration, videoModel, aspectRatio: (videoModel === "seedance" || videoModel === "wan-26") ? aspectRatio : undefined });
-      setGeneratedVideo(videoUrl);
+      const videoUrl = await generateVideo({ prompt: currentPrompt, image: currentImage, duration: currentDuration, videoModel: currentModel, aspectRatio: (currentModel === "seedance" || currentModel === "wan-26") ? currentAspect : undefined });
+      setJobs(prev => prev.map(j => j.id === id ? { ...j, status: 'done', videoUrl } : j));
       toast({ title: "Video generated!", description: "Your animated video is ready" });
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Failed to generate video";
-      setErrorResponse(msg);
+      setJobs(prev => prev.map(j => j.id === id ? { ...j, status: 'error', error: msg } : j));
       toast({ title: "Generation failed", description: msg, variant: "destructive" });
-    } finally { setLoading(false); }
+    }
   };
+
+  const removeJob = (id: string) => setJobs(prev => prev.filter(j => j.id !== id));
 
   return (
     <div className="space-y-6">
@@ -118,27 +134,48 @@ export const VideoMode = () => {
           </div>
         )}
 
-        <Button onClick={handleGenerate} disabled={loading || !prompt.trim() || !uploadedImage} className="w-full rounded-none font-mono uppercase tracking-wider h-12" size="lg">
-          {loading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</>) : (<><Video className="mr-2 h-4 w-4" />Generate Video</>)}
+        <Button onClick={handleGenerate} disabled={!prompt.trim() || !uploadedImage} className="w-full rounded-none font-mono uppercase tracking-wider h-12" size="lg">
+          <Video className="mr-2 h-4 w-4" />Generate Video
         </Button>
       </div>
 
-      {generatedVideo && (
-        <div className="border border-border bg-card overflow-hidden">
-          <video src={generatedVideo} controls className="w-full h-auto" />
-          <div className="p-4 border-t border-border">
-            <Button variant="outline" className="w-full rounded-none font-mono uppercase text-xs tracking-wider" onClick={() => { navigator.clipboard.writeText(generatedVideo); toast({ title: "Copied!", description: "Video URL copied to clipboard" }); }}>
-              <Copy className="mr-2 h-4 w-4" />Copy URL
+      {jobs.map(job => (
+        <div key={job.id} className="border border-border bg-card overflow-hidden">
+          <div className="p-3 border-b border-border flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">{job.videoModel} · {job.status}</p>
+              <p className="font-mono text-xs mt-1 truncate">{job.prompt}</p>
+            </div>
+            <Button size="icon" variant="ghost" className="rounded-none h-7 w-7" onClick={() => removeJob(job.id)}>
+              <X className="h-4 w-4" />
             </Button>
           </div>
-        </div>
-      )}
 
-      {errorResponse && (
-        <div className="border border-destructive bg-destructive/10 p-4 overflow-auto">
-          <p className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">{errorResponse}</p>
+          {job.status === 'pending' && (
+            <div className="flex items-center justify-center h-48 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span className="font-mono text-xs uppercase tracking-wider">Generating...</span>
+            </div>
+          )}
+
+          {job.status === 'done' && job.videoUrl && (
+            <>
+              <video src={job.videoUrl} controls className="w-full h-auto" />
+              <div className="p-4 border-t border-border">
+                <Button variant="outline" className="w-full rounded-none font-mono uppercase text-xs tracking-wider" onClick={() => { navigator.clipboard.writeText(job.videoUrl!); toast({ title: "Copied!", description: "Video URL copied to clipboard" }); }}>
+                  <Copy className="mr-2 h-4 w-4" />Copy URL
+                </Button>
+              </div>
+            </>
+          )}
+
+          {job.status === 'error' && (
+            <div className="border-t border-destructive bg-destructive/10 p-4 overflow-auto">
+              <p className="font-mono text-xs text-destructive whitespace-pre-wrap break-all">{job.error}</p>
+            </div>
+          )}
         </div>
-      )}
+      ))}
     </div>
   );
 };
