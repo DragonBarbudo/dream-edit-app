@@ -10,7 +10,7 @@ import { ImageCompare } from './ImageCompare';
 
 export const EditMode = () => {
   const [prompt, setPrompt] = useState('');
-  const [model, setModel] = useState<ModelType>('nano-banana');
+  const [model, setModel] = useState<ModelType>('nano-banana-2');
   const [loading, setLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
