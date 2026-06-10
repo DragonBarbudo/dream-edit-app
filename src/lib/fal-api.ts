@@ -317,6 +317,14 @@ export const generateVideo = async ({ prompt, image, duration, videoModel, aspec
     }
   }
 
-  const resultUrl = await pollResult("wan-25", requestId, false);
-  return await fetchResult(resultUrl, true);
+  const statusUrl = request.status_url || `https://queue.fal.run/fal-ai/wan-25-preview/requests/${requestId}/status`;
+  const resultUrlBase = request.response_url || `https://queue.fal.run/fal-ai/wan-25-preview/requests/${requestId}`;
+  while (true) {
+    const response = await fetch(statusUrl, { headers: { "Authorization": `Key ${FAL_API_KEY}` } });
+    if (!response.ok) throw new Error(`Status check failed: ${response.statusText}`);
+    const status = await response.json();
+    if (status.status === "COMPLETED") return await fetchResult(resultUrlBase, true);
+    else if (status.status === "FAILED") throw new Error(status.error?.message || status.error || "Generation failed");
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
 };
